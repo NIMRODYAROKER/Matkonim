@@ -193,7 +193,10 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.55}
 // ---------- אייקונים ----------
 const IC = {
   all:'<path d="M4 6h16M4 12h16M4 18h10"/>',
-  meat:'<path d="M15.5 4.5a5 5 0 0 1 0 7.07l-3.2 3.2-4.24-4.24 3.2-3.2a5 5 0 0 1 4.24-2.83z"/><path d="M8.06 10.53 5.6 13a1.8 1.8 0 1 1-2.2 2.83A1.8 1.8 0 1 1 6.2 18.6l2.47-2.46"/>',
+  chicken:'<path d="M15.5 4.5a5 5 0 0 1 0 7.07l-3.2 3.2-4.24-4.24 3.2-3.2a5 5 0 0 1 4.24-2.83z"/><path d="M8.06 10.53 5.6 13a1.8 1.8 0 1 1-2.2 2.83A1.8 1.8 0 1 1 6.2 18.6l2.47-2.46"/>',
+  meat:'<path d="M4 13c0-5 4-8 9-8 4 0 7 2.5 7 6 0 5-5 8-10 8-3.5 0-6-2.5-6-6z"/><circle cx="14" cy="10.5" r="2"/>',
+  main:'<circle cx="12" cy="13" r="7"/><path d="M3 5v4a2 2 0 0 0 2 2V20M5 5v4M19 4v16M19 4c-2 1-2.5 4-2.5 6.5H19"/>',
+  pesach:'<rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 9.5h16M4 14.5h16M9 5v14M15 5v14"/>',
   fish:'<path d="M3 12c3-5 8-6 12-4l5-3-1 7 1 7-5-3c-4 2-9 1-12-4z"/><circle cx="8" cy="11" r=".8" fill="currentColor"/>',
   soup:'<path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M8 4c-1 1.5 1 2.5 0 4M12 3c-1 1.5 1 2.5 0 4M16 4c-1 1.5 1 2.5 0 4"/><path d="M8 21h8"/>',
   salad:'<path d="M5 19C5 10 10 5 20 4c-1 10-6 15-15 15z"/><path d="M5 19 13 11"/>',
@@ -213,14 +216,17 @@ const IC = {
 };
 const ic = (n) => `<svg class="i" viewBox="0 0 24 24">${IC[n]}</svg>`;
 const CATS = [
-  ['meat','עוף ובשר','#f3d9cc','#b5523b'],
+  ['chicken','עוף','#f6e2c0','#b67a1d'],
+  ['meat','בשר','#f3d9cc','#b5523b'],
   ['fish','דגים','#d6e6ea','#3f7480'],
-  ['soup','מרקים','#f6e2c0','#b67a1d'],
+  ['soup','מרקים','#efe0cf','#8a5a3a'],
   ['salad','סלטים','#dfe8cf','#5f7442'],
   ['side','צמחוני ותוספות','#ece4cf','#7a6a3a'],
-  ['bake','מאפים ולחמים','#f2e0c8','#9a6232'],
-  ['sweet','קינוחים ועוגות','#f1d8de','#9a4a62']
+  ['bake','מאפים ועוגות','#f1d8de','#9a4a62']
 ];
+// קבוצות מיוחדות בסינון
+const GROUPS = { main: { name: 'עיקריות', has: r => ['chicken','meat','fish'].includes(r.cat) },
+  pesach: { name: 'פסח', has: r => /פסח/.test(r.title + ' ' + (r.note || '')) } };
 const CAT = Object.fromEntries(CATS.map(c => [c[0], {name:c[1], tint:c[2], tone:c[3]}]));
 
 // ---------- מצב ----------
@@ -250,14 +256,14 @@ function toast(msg) {
 
 // ---------- רשימה ראשית ----------
 function paintChips() {
-  const items = [['all','הכל']].concat(CATS.map(c => [c[0], c[1]]));
+  const items = [['all','הכל'], ['main', GROUPS.main.name]].concat(CATS.map(c => [c[0], c[1]]), [['pesach', GROUPS.pesach.name]]);
   $('#chips').innerHTML = items.map(([k, n]) => `<button class="chip${FILTER === k ? ' on' : ''}" data-k="${k}">${k === 'all' ? '' : ic(k)}${n}</button>`).join('');
 }
 const fold = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ"'׳״\-–]/g, '').replace(/\s+/g, ' ');
 function visible() {
   const words = fold(QUERY).trim().split(' ').filter(Boolean);
   return RECIPES.filter(r => {
-    if (FILTER !== 'all' && r.cat !== FILTER) return false;
+    if (FILTER !== 'all' && (GROUPS[FILTER] ? !GROUPS[FILTER].has(r) : r.cat !== FILTER)) return false;
     if (!words.length) return true;
     const hay = r._hay || (r._hay = fold([r.title, r.source, r.note, ...(r.ing || [])].join(' ')));
     return words.every(w => hay.includes(w));

@@ -51,7 +51,7 @@ function withSecurityHeaders(res) {
 
 const SESSION_DAYS = 90;
 const MIN_PASS = 6;
-const CATS = ['meat', 'fish', 'soup', 'salad', 'side', 'bake', 'sweet'];
+const CATS = ['chicken', 'meat', 'fish', 'soup', 'salad', 'side', 'bake'];
 const COLORS = ['#c4633f', '#6f8a4a', '#d49a3a', '#8a5a7a', '#4f7f8a', '#b5523b', '#7a6a4a'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PASS_ABC = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -133,8 +133,12 @@ export class RecipesDB extends DurableObject {
     this.sql.exec('DELETE FROM sessions WHERE created < ?', Date.now() - SESSION_DAYS * 864e5);
     // מתכונים מקבוצת הוואטסאפ: נכנסים פעם אחת. מתכון שנערך נשאר ערוך, מתכון שנמחק לא חוזר
     const now = Date.now();
+    // קטגוריות: קינוחים ומאפים אוחדו. מתכון מהקבוצה שאף אחד לא ערך מקבל את הקטגוריה מהקובץ
+    this.sql.exec("UPDATE recipes SET cat = 'bake' WHERE cat = 'sweet'");
     for (const r of SEED) {
-      if (this.one('SELECT 1 AS x FROM recipes WHERE id = ?', r.id) || this.one('SELECT 1 AS x FROM seed_removed WHERE id = ?', r.id)) continue;
+      const ex = this.one('SELECT cat, by_user, edited_by FROM recipes WHERE id = ?', r.id);
+      if (ex) { if (ex.by_user === null && ex.edited_by === null && ex.cat !== r.cat) this.sql.exec('UPDATE recipes SET cat = ? WHERE id = ?', r.cat, r.id); continue; }
+      if (this.one('SELECT 1 AS x FROM seed_removed WHERE id = ?', r.id)) continue;
       const sort = r.date ? Date.parse(r.date + 'T12:00:00Z') : now - 400 * 864e5;
       this.sql.exec(`INSERT INTO recipes (id, cat, title, source, url, img, servings, note, ing, steps, video, by_user, sort, created, updated)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
