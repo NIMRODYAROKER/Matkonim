@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מתכונים – ספר המתכונים של המשפחה</title>
+<meta name="description" content="כל המתכונים מקבוצת הוואטסאפ של המשפחה במקום אחד. מחפשים, מבשלים, ומוסיפים מתכונים חדשים.">
+<meta name="theme-color" content="#f6efe4">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="מתכונים">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="מתכונים">
+<meta property="og:locale" content="he_IL">
+<meta property="og:title" content="מתכונים – ספר המתכונים של המשפחה">
+<meta property="og:description" content="כל המתכונים מקבוצת הוואטסאפ במקום אחד. מחפשים, מבשלים ומוסיפים.">
+<meta property="og:url" content="https://matkonim.nimrodyaroker.workers.dev/">
+<meta property="og:image" content="https://matkonim.nimrodyaroker.workers.dev/og-image.jpg">
+<meta property="og:image:secure_url" content="https://matkonim.nimrodyaroker.workers.dev/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="מתכונים – ספר המתכונים של המשפחה">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="מתכונים – ספר המתכונים של המשפחה">
+<meta name="twitter:description" content="כל המתכונים מקבוצת הוואטסאפ במקום אחד. מחפשים, מבשלים ומוסיפים.">
+<meta name="twitter:image" content="https://matkonim.nimrodyaroker.workers.dev/og-image.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6efe4; --card:#fffaf2; --ink:#2b2420; --soft:#7a6c60; --line:#e7dccb;
+  --terra:#c4633f; --terra-d:#a94f2f; --olive:#5f7442; --mustard:#d9a441;
+  --serif:'Frank Ruhl Libre', 'Times New Roman', serif;
+  --sans:'Heebo', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --r:18px; --shadow:0 1px 2px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px}
+body{min-height:100vh;overflow-x:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* רקע חי ועדין */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.bg i{position:absolute;border-radius:50%;filter:blur(60px);opacity:.28;animation:drift 26s ease-in-out infinite alternate}
+.bg i:nth-child(1){width:340px;height:340px;background:#e9a37f;top:-120px;right:-80px}
+.bg i:nth-child(2){width:300px;height:300px;background:#b9c79a;top:160px;left:-140px;animation-duration:32s;animation-delay:-8s}
+.bg i:nth-child(3){width:260px;height:260px;background:#f1cf8c;bottom:-80px;right:10%;animation-duration:38s;animation-delay:-16s}
+@keyframes drift{to{transform:translate(40px,60px) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.bg i{animation:none}}
+
+.wrap{max-width:980px;margin:0 auto;padding:0 16px calc(110px + env(safe-area-inset-bottom))}
+header.top{display:flex;align-items:center;gap:12px;padding:calc(18px + env(safe-area-inset-top)) 0 10px}
+header.top img{width:46px;height:46px;border-radius:13px;box-shadow:var(--shadow)}
+.brand{flex:1;min-width:0}
+.brand h1{font-family:var(--serif);font-weight:900;font-size:30px;line-height:1;margin:0;letter-spacing:-.5px}
+.brand p{margin:3px 0 0;color:var(--soft);font-size:14px}
+.acct{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--card);box-shadow:var(--shadow);font-weight:700;color:#fff}
+.acct.out{color:var(--ink)}
+
+.search{position:sticky;top:0;z-index:5;padding:10px 0 8px;background:linear-gradient(var(--paper) 75%, rgba(246,239,228,0))}
+.sbox{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:0 14px;height:52px;box-shadow:var(--shadow)}
+.sbox svg{color:var(--soft)}
+.sbox input{flex:1;border:0;outline:0;background:none;font-size:17px;height:100%;min-width:0}
+.sbox input::placeholder{color:#a89a8c}
+.sbox input::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
+.sbox .clr{display:none;color:var(--soft)}
+.sbox.has .clr{display:block}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:none;margin:0 -16px;padding-inline:16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:15px;font-weight:500;white-space:nowrap;transition:.15s}
+.chip svg.i{width:18px;height:18px}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.count{color:var(--soft);font-size:13px;margin:8px 2px 10px}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr);gap:16px}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);text-align:right;display:flex;flex-direction:column;transition:transform .15s;animation:pop .35s ease both}
+.card:active{transform:scale(.97)}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}}
+.pic{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--tint,#efe3d2)}
+.pic img,.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.tile{position:absolute;inset:0;display:grid;place-items:center;color:var(--tone,#c4633f);background:radial-gradient(circle at 70% 30%, rgba(255,255,255,.55), transparent 60%), var(--tint,#efe3d2)}
+.tile svg.i{width:46%;height:46%;stroke-width:1.2;opacity:.85}
+.badge{position:absolute;bottom:8px;right:8px;display:flex;align-items:center;gap:4px;background:rgba(43,36,32,.78);color:#fff;font-size:12px;padding:3px 8px 3px 9px;border-radius:999px}
+.badge svg.i{width:13px;height:13px;fill:#fff;stroke:none}
+.card .t{padding:10px 12px 12px;flex:1;display:flex;flex-direction:column;gap:4px}
+.card h3{margin:0;font-size:15.5px;line-height:1.3;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card small{color:var(--soft);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;color:var(--soft);padding:60px 20px}
+.empty b{display:block;font-family:var(--serif);font-size:22px;color:var(--ink);margin-bottom:6px}
+
+.fab{position:fixed;left:18px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:10;height:58px;padding:0 22px 0 18px;border-radius:999px;background:var(--terra);color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 26px rgba(196,99,63,.42)}
+.fab:active{transform:scale(.96)}
+
+/* חלונות */
+.sheet{position:fixed;inset:0;z-index:20;background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1);visibility:hidden}
+.sheet.open{transform:none;visibility:visible}
+.sheet .in{max-width:720px;margin:0 auto;padding:0 18px calc(60px + env(safe-area-inset-bottom))}
+.bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;pointer-events:none}
+.round{pointer-events:auto;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(255,250,242,.92);box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+.hero{margin:-64px -18px 0;aspect-ratio:16/11;max-height:52vh;width:calc(100% + 36px);position:relative;overflow:hidden;background:var(--tint)}
+@media(min-width:720px){.hero{margin:-64px 0 0;width:100%;border-radius:0 0 24px 24px}}
+.rtitle{font-family:var(--serif);font-weight:900;font-size:30px;line-height:1.15;margin:20px 0 8px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--soft);font-size:14px;align-items:center}
+.meta span{display:flex;align-items:center;gap:5px}
+.meta svg.i{width:16px;height:16px}
+.acts{display:flex;gap:8px;margin:16px 0 6px;flex-wrap:wrap}
+.btn{text-decoration:none;color:inherit;height:46px;padding:0 16px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:600;font-size:15px;background:var(--card);border:1px solid var(--line)}
+.btn.main{background:var(--terra);color:#fff;border-color:var(--terra)}
+.btn.dark{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.wide{width:100%;height:54px;font-size:17px}
+.btn svg.i{width:19px;height:19px}
+h2.sec{font-family:var(--serif);font-size:22px;margin:26px 0 10px;display:flex;align-items:baseline;gap:8px}
+h2.sec small{font-family:var(--sans);font-size:13px;color:var(--soft);font-weight:400}
+ul.ing{list-style:none;margin:0;padding:0;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+ul.ing li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line);line-height:1.45;cursor:pointer;transition:.15s}
+ul.ing li:first-child{border-top:0}
+ul.ing li .box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #cdbda8;margin-top:1px;display:grid;place-items:center;transition:.15s}
+ul.ing li.done{color:#a99b8d;text-decoration:line-through}
+ul.ing li.done .box{background:var(--olive);border-color:var(--olive)}
+ul.ing li.done .box::after{content:'';width:10px;height:5px;border:solid #fff;border-width:0 0 2.4px 2.4px;transform:rotate(-45deg) translate(1px,-1px)}
+ul.ing li.head{cursor:default;font-weight:700;background:#f3e9da;color:var(--terra-d);padding:9px 14px;font-size:14.5px}
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+ol.steps li{position:relative;padding:14px 50px 14px 14px;margin-bottom:10px;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);line-height:1.6;cursor:pointer;transition:.2s}
+ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;right:12px;top:13px;width:28px;height:28px;border-radius:50%;background:var(--terra);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center}
+ol.steps li.done{opacity:.45}
+ol.steps li.done::before{background:var(--olive)}
+.note{margin-top:18px;padding:14px 16px;border-radius:var(--r);background:#f9ecc9;line-height:1.55;font-size:15px}
+.by{margin-top:26px;color:var(--soft);font-size:13.5px;text-align:center}
+.vid{margin-top:20px;padding:22px;border-radius:var(--r);background:var(--card);box-shadow:var(--shadow);text-align:center;line-height:1.6}
+.vid p{margin:0 0 14px;color:var(--soft)}
+
+/* טפסים */
+.ftitle{font-family:var(--serif);font-weight:900;font-size:28px;margin:6px 0 18px}
+label.f{display:block;margin-bottom:14px}
+label.f>span{display:block;font-weight:600;font-size:14.5px;margin-bottom:6px}
+label.f>span em{font-style:normal;color:var(--soft);font-weight:400}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:13px 14px;font-size:16px;outline:0;transition:.15s}
+.inp:focus{border-color:var(--terra)}
+textarea.inp{min-height:150px;resize:vertical;line-height:1.55}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.ph{display:flex;align-items:center;gap:12px}
+.ph .prev{width:96px;height:72px;border-radius:12px;background:#efe3d2 center/cover;flex:none;display:grid;place-items:center;color:var(--soft)}
+.err{color:#b3261e;font-size:14.5px;min-height:20px;margin:4px 0 10px}
+.tabs{display:flex;background:#ece1d1;border-radius:14px;padding:4px;margin-bottom:18px}
+.tabs button{flex:1;height:42px;border-radius:11px;font-weight:600;color:var(--soft)}
+.tabs button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.hint{color:var(--soft);font-size:13.5px;line-height:1.5;margin:-6px 0 14px}
+.urow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:14.5px}
+.urow small{color:var(--soft);display:block}
+.temp{font-family:monospace;font-size:18px;background:#f9ecc9;padding:2px 8px;border-radius:6px;user-select:all}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:14px;font-size:15px;opacity:0;transition:.25s;z-index:40;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.loading{display:grid;place-items:center;padding:80px 0;color:var(--soft)}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--terra);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<div class="wrap">
+  <header class="top">
+    <img src="/logo.svg" alt="">
+    <div class="brand"><h1>מתכונים</h1><p>ספר המתכונים של המשפחה</p></div>
+    <button class="acct out" id="acct" aria-label="חשבון"></button>
+  </header>
+  <div class="search">
+    <div class="sbox" id="sbox">
+      <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="מה מבשלים? שם או מצרך…" autocomplete="off" enterkeyhint="search">
+      <button class="clr" id="clr" aria-label="ניקוי"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <nav class="chips" id="chips"></nav>
+  </div>
+  <div class="count" id="count"></div>
+  <main class="grid" id="grid"><div class="loading" style="grid-column:1/-1"><div class="spin"></div></div></main>
+</div>
+<button class="fab" id="fab"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>מתכון חדש</button>
+<section class="sheet" id="sheet" aria-modal="true" role="dialog"></section>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+// ---------- אייקונים ----------
+const IC = {
+  all:'<path d="M4 6h16M4 12h16M4 18h10"/>',
+  meat:'<path d="M15.5 4.5a5 5 0 0 1 0 7.07l-3.2 3.2-4.24-4.24 3.2-3.2a5 5 0 0 1 4.24-2.83z"/><path d="M8.06 10.53 5.6 13a1.8 1.8 0 1 1-2.2 2.83A1.8 1.8 0 1 1 6.2 18.6l2.47-2.46"/>',
+  fish:'<path d="M3 12c3-5 8-6 12-4l5-3-1 7 1 7-5-3c-4 2-9 1-12-4z"/><circle cx="8" cy="11" r=".8" fill="currentColor"/>',
+  soup:'<path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M8 4c-1 1.5 1 2.5 0 4M12 3c-1 1.5 1 2.5 0 4M16 4c-1 1.5 1 2.5 0 4"/><path d="M8 21h8"/>',
+  salad:'<path d="M5 19C5 10 10 5 20 4c-1 10-6 15-15 15z"/><path d="M5 19 13 11"/>',
+  side:'<path d="M14.5 9.5 5 19c-1 1-2.5-.5-1.5-1.5L13 8"/><path d="M13 8c1-3 4-4 7-4-0 3-1 6-4 7"/><path d="M15 6l3-3M18 9l3-1"/>',
+  bake:'<path d="M5 11a7 5 0 0 1 14 0v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M9 9l1.5 3M13 8l1.5 3"/>',
+  sweet:'<path d="M3 20h18l-2-9H5z"/><path d="M5 11c0-3 3-5 7-5s7 2 7 5"/><path d="M12 6V3"/><circle cx="12" cy="2.5" r=".6" fill="currentColor"/>',
+  play:'<path d="M8 5v14l11-7z"/>',
+  close:'<path d="M6 6l12 12M18 6 6 18"/>',
+  back:'<path d="M9 6l6 6-6 6"/>',
+  share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .7 3.2 2.7 3.8 5.5"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+};
+const ic = (n) => `<svg class="i" viewBox="0 0 24 24">${IC[n]}</svg>`;
+const CATS = [
+  ['meat','עוף ובשר','#f3d9cc','#b5523b'],
+  ['fish','דגים','#d6e6ea','#3f7480'],
+  ['soup','מרקים','#f6e2c0','#b67a1d'],
+  ['salad','סלטים','#dfe8cf','#5f7442'],
+  ['side','צמחוני ותוספות','#ece4cf','#7a6a3a'],
+  ['bake','מאפים ולחמים','#f2e0c8','#9a6232'],
+  ['sweet','קינוחים ועוגות','#f1d8de','#9a4a62']
+];
+const CAT = Object.fromEntries(CATS.map(c => [c[0], {name:c[1], tint:c[2], tone:c[3]}]));
+
+// ---------- מצב ----------
+const $ = (s, el = document) => el.querySelector(s);
+let RECIPES = [], ME = null, FILTER = 'all', QUERY = '';
+let TOKEN = '';
+try { TOKEN = localStorage.getItem('mk_token') || ''; } catch (e) {}
+const setToken = (t) => { TOKEN = t || ''; try { t ? localStorage.setItem('mk_token', t) : localStorage.removeItem('mk_token'); } catch (e) {} };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function api(path, body) {
+  const opt = { method: body ? 'POST' : 'GET', headers: {} };
+  if (body) { opt.headers['content-type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  if (TOKEN) opt.headers.authorization = 'Bearer ' + TOKEN;
+  let res;
+  try { res = await fetch(path, opt); } catch (e) { throw new Error('אין חיבור לאינטרנט. נסו שוב'); }
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (res.status === 401 && TOKEN) { setToken(''); ME = null; paintAcct(); }
+  if (!res.ok) throw new Error(data.error || 'משהו השתבש. נסו שוב');
+  return data;
+}
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ---------- רשימה ראשית ----------
+function paintChips() {
+  const items = [['all','הכל']].concat(CATS.map(c => [c[0], c[1]]));
+  $('#chips').innerHTML = items.map(([k, n]) => `<button class="chip${FILTER === k ? ' on' : ''}" data-k="${k}">${k === 'all' ? '' : ic(k)}${n}</button>`).join('');
+}
+const fold = (s) => String(s || '').toLowerCase().replace(/[֑-ׇ"'׳״\-–]/g, '').replace(/\s+/g, ' ');
+function visible() {
+  const words = fold(QUERY).trim().split(' ').filter(Boolean);
+  return RECIPES.filter(r => {
+    if (FILTER !== 'all' && r.cat !== FILTER) return false;
+    if (!words.length) return true;
+    const hay = r._hay || (r._hay = fold([r.title, r.source, r.note, ...(r.ing || [])].join(' ')));
+    return words.every(w => hay.includes(w));
+  }).sort((a, b) => {
+    if (!words.length) return b.sort - a.sort;
+    const ta = words.every(w => fold(a.title).includes(w)), tb = words.every(w => fold(b.title).includes(w));
+    return (tb - ta) || (b.sort - a.sort);
+  });
+}
+function picHtml(r, cls) {
+  const c = CAT[r.cat] || CAT.side;
+  const tile = `<div class="tile" style="--tint:${c.tint};--tone:${c.tone}">${ic(r.cat)}</div>`;
+  const img = r.img ? `<img src="${esc(r.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+  return `<div class="${cls}" style="--tint:${c.tint}">${tile}${img}${r.video ? `<span class="badge">${ic('play')}סרטון</span>` : ''}</div>`;
+}
+function paintGrid() {
+  const list = visible();
+  $('#count').textContent = QUERY || FILTER !== 'all' ? (list.length ? `${list.length} מתכונים` : '') : `${RECIPES.length} מתכונים בספר`;
+  if (!list.length) {
+    $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><b>לא מצאנו</b>נסו מילה אחרת, או הוסיפו את המתכון בעצמכם</div>`;
+    return;
+  }
+  $('#grid').innerHTML = list.map((r, i) => `<button class="card" data-id="${esc(r.id)}" style="animation-delay:${Math.min(i, 12) * 25}ms">
+      ${picHtml(r, 'pic')}
+      <div class="t"><h3>${esc(r.title)}</h3><small>${esc(CAT[r.cat] ? CAT[r.cat].name : '')}${r.source ? ' · ' + esc(r.source) : ''}</small></div>
+    </button>`).join('');
+}
+function paintAcct() {
+  const b = $('#acct');
+  if (ME) { b.className = 'acct'; b.style.background = ME.color; b.textContent = (ME.name || '?').trim().charAt(0); }
+  else { b.className = 'acct out'; b.style.background = ''; b.innerHTML = ic('user'); }
+}
+async function load() {
+  try {
+    const d = await api('/api/recipes');
+    RECIPES = d.recipes; ME = d.me; paintAcct(); paintGrid(); route();
+  } catch (e) {
+    $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><b>לא הצלחנו לטעון</b>${esc(e.message)}</div>`;
+  }
+}
+
+// ---------- ניווט ----------
+let depth = 0;
+const sheet = $('#sheet');
+function go(hash) { depth++; location.hash = hash; }
+function closeSheet() { if (depth > 0) { depth--; history.back(); } else { history.replaceState(null, '', location.pathname); route(); } }
+function openSheet(html) {
+  sheet.innerHTML = html; sheet.scrollTop = 0;
+  requestAnimationFrame(() => sheet.classList.add('open'));
+  document.body.style.overflow = 'hidden';
+}
+function hideSheet() { sheet.classList.remove('open'); document.body.style.overflow = ''; releaseWake(); }
+function route() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  let m;
+  if ((m = h.match(/^r\/([\w-]+)$/))) {
+    const r = RECIPES.find(x => x.id === m[1]);
+    if (r) return showRecipe(r);
+    if (!RECIPES.length) return; // עוד נטען
+  } else if (h === 'add') return needLogin(() => showForm(null));
+  else if ((m = h.match(/^edit\/([\w-]+)$/))) { const r = RECIPES.find(x => x.id === m[1]); if (r) return needLogin(() => showForm(r)); }
+  else if (h === 'login') return showAuth();
+  else if (h === 'me') { if (ME) return showAccount(); return showAuth(); }
+  hideSheet();
+}
+addEventListener('hashchange', () => { route(); });
+
+// ---------- מסך מתכון ----------
+let wake = null;
+async function keepAwake() { try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function releaseWake() { try { wake && wake.release(); } catch (e) {} wake = null; }
+function showRecipe(r) {
+  const c = CAT[r.cat] || CAT.side;
+  const host = (() => { try { return new URL(r.url).hostname.replace(/^www\.|^m\.|^mobile\./, ''); } catch (e) { return ''; } })();
+  const isVideo = /instagram|facebook|tiktok|youtu/.test(host);
+  const ing = (r.ing || []).map(x => /[:：]\s*$/.test(x) ? `<li class="head">${esc(x.replace(/[:：]\s*$/, ''))}</li>` : `<li><span class="box"></span><span>${esc(x)}</span></li>`).join('');
+  const steps = (r.steps || []).map(x => `<li>${esc(x)}</li>`).join('');
+  const ingCount = (r.ing || []).filter(x => !/[:：]\s*$/.test(x)).length;
+  openSheet(`
+    <div class="bar"><button class="round" data-act="close" aria-label="סגירה">${ic('back')}</button>
+      ${r.edit ? `<button class="round" data-act="edit" aria-label="עריכה">${ic('edit')}</button>` : '<span></span>'}</div>
+    <div class="in">
+      ${picHtml(r, 'hero')}
+      <h1 class="rtitle">${esc(r.title)}</h1>
+      <div class="meta">
+        <span style="color:${c.tone}">${ic(r.cat)}${esc(c.name)}</span>
+        ${r.servings ? `<span>${esc(r.servings)}</span>` : ''}
+        ${r.source ? `<span>${esc(r.source)}</span>` : ''}
+      </div>
+      <div class="acts">
+        ${r.url && !r.video ? `<a class="btn" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${ic(isVideo ? 'play' : 'link')}${isVideo ? 'לסרטון' : 'למתכון המקורי'}</a>` : ''}
+        <button class="btn" data-act="share">${ic('share')}שיתוף</button>
+      </div>
+      ${r.video ? `<div class="vid"><p>המתכון הזה נמצא בתוך הסרטון.<br>אפשר לצפות בו, ואם תרצו לכתוב אותו כאן לכולם.</p>
+        <a class="btn main" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${ic('play')}צפייה בסרטון</a>
+        ${r.edit ? `<div style="height:8px"></div><button class="btn" data-act="edit">${ic('edit')}לכתוב את המתכון</button>` : ''}</div>` : ''}
+      ${ing ? `<h2 class="sec">מצרכים <small>${ingCount} · לחיצה מסמנת שיש</small></h2><ul class="ing">${ing}</ul>` : ''}
+      ${steps ? `<h2 class="sec">אופן ההכנה</h2><ol class="steps">${steps}</ol>` : ''}
+      ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}
+      <div class="by">${r.by ? 'נוסף על ידי ' + esc(r.by) : 'מקבוצת המתכונים בוואטסאפ'}</div>
+    </div>`);
+  sheet.dataset.id = r.id;
+  if (ing || steps) keepAwake();
+}
+sheet.addEventListener('click', (e) => {
+  const li = e.target.closest('ul.ing li:not(.head), ol.steps li');
+  if (li) { li.classList.toggle('done'); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const act = a.dataset.act, r = RECIPES.find(x => x.id === sheet.dataset.id);
+  if (act === 'close') closeSheet();
+  else if (act === 'edit' && r) go('edit/' + r.id);
+  else if (act === 'share' && r) shareRecipe(r);
+});
+async function shareRecipe(r) {
+  const url = location.origin + '/#r/' + r.id;
+  const text = r.title + ' – מתוך ספר המתכונים של המשפחה';
+  if (navigator.share) { try { await navigator.share({ title: r.title, text, url }); } catch (e) {} return; }
+  open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank', 'noopener');
+}
+
+// ---------- התחברות ----------
+let afterLogin = null;
+function needLogin(fn) { if (ME) return fn(); afterLogin = fn; showAuth(true); }
+function showAuth(why, mode) {
+  mode = mode || 'login';
+  openSheet(`
+    <div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>
+    <div class="in" style="padding-top:4px">
+      <h1 class="ftitle">${mode === 'login' ? 'התחברות' : 'הרשמה'}</h1>
+      ${why ? '<p class="hint" style="margin-top:-8px">כדי להוסיף ולערוך מתכונים צריך להתחבר. לקרוא אפשר גם בלי.</p>' : ''}
+      <div class="tabs"><button data-m="login" class="${mode === 'login' ? 'on' : ''}">יש לי משתמש</button><button data-m="signup" class="${mode === 'signup' ? 'on' : ''}">משתמש חדש</button></div>
+      <form id="af" novalidate>
+        ${mode === 'signup' ? '<label class="f"><span>שם</span><input class="inp" name="name" autocomplete="given-name" maxlength="24" required></label>' : ''}
+        <label class="f"><span>מייל</span><input class="inp" name="email" type="email" inputmode="email" autocomplete="email" dir="ltr" required></label>
+        <label class="f"><span>סיסמה ${mode === 'signup' ? '<em>(לפחות 6 תווים)</em>' : ''}</span><input class="inp" name="password" type="password" autocomplete="${mode === 'login' ? 'current-password' : 'new-password'}" dir="ltr" required></label>
+        <div class="err" id="aerr"></div>
+        <button class="btn main wide" type="submit">${mode === 'login' ? 'כניסה' : 'יצירת משתמש'}</button>
+      </form>
+      ${mode === 'login' ? '<p class="hint" style="margin-top:14px">שכחתם סיסמה? בקשו מנמרוד לאפס לכם אותה.</p>' : ''}
+    </div>`);
+  sheet.querySelectorAll('[data-m]').forEach(b => b.onclick = () => showAuth(why, b.dataset.m));
+  sheet.querySelector('[data-x]').onclick = () => { afterLogin = null; closeSheet(); };
+  $('#af').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target), btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; $('#aerr').textContent = '';
+    try {
+      const d = await api(mode === 'login' ? '/api/login' : '/api/signup', Object.fromEntries(f));
+      setToken(d.token);
+      const r = await api('/api/recipes'); RECIPES = r.recipes; ME = r.me; paintAcct(); paintGrid();
+      toast(mode === 'login' ? `שלום ${ME.name}` : `ברוכים הבאים, ${ME.name}`);
+      const fn = afterLogin; afterLogin = null;
+      if (fn) fn(); else closeSheet();
+    } catch (err) { $('#aerr').textContent = err.message; btn.disabled = false; }
+  };
+}
+
+// ---------- חשבון ----------
+function showAccount() {
+  openSheet(`
+    <div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>
+    <div class="in" style="padding-top:4px">
+      <h1 class="ftitle">שלום ${esc(ME.name)}</h1>
+      <p class="hint" style="margin-top:-8px" dir="ltr" align="right">${esc(ME.email)}</p>
+      <details style="margin:14px 0 18px"><summary class="btn" style="list-style:none">שינוי סיסמה</summary>
+        <form id="pf" style="margin-top:14px">
+          <label class="f"><span>הסיסמה הנוכחית</span><input class="inp" name="oldPass" type="password" autocomplete="current-password" dir="ltr"></label>
+          <label class="f"><span>סיסמה חדשה</span><input class="inp" name="newPass" type="password" autocomplete="new-password" dir="ltr"></label>
+          <div class="err" id="perr"></div>
+          <button class="btn dark wide" type="submit">שמירה</button>
+        </form>
+      </details>
+      <button class="btn wide" id="logout">התנתקות</button>
+      ${ME.admin ? `<h2 class="sec">${ic('people')}בני המשפחה באתר</h2><div id="users"><div class="spin"></div></div>` : ''}
+    </div>`);
+  sheet.querySelector('[data-x]').onclick = closeSheet;
+  $('#logout').onclick = async () => { try { await api('/api/logout', {}); } catch (e) {} setToken(''); ME = null; paintAcct(); load(); closeSheet(); toast('התנתקת'); };
+  $('#pf').onsubmit = async (e) => {
+    e.preventDefault(); $('#perr').textContent = '';
+    try { await api('/api/password', Object.fromEntries(new FormData(e.target))); e.target.reset(); toast('הסיסמה עודכנה'); }
+    catch (err) { $('#perr').textContent = err.message; }
+  };
+  if (ME.admin) loadUsers();
+}
+async function loadUsers() {
+  try {
+    const d = await api('/api/admin/users');
+    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול' };
+    $('#users').innerHTML = d.users.map(u => `<div class="urow"><div>${esc(u.name)}<small dir="ltr" style="text-align:right">${esc(u.email)}</small></div>
+      ${u.id === ME.id ? '' : `<button class="btn" data-reset="${u.id}" data-name="${esc(u.name)}">איפוס סיסמה</button>`}</div>`).join('') +
+      (d.alerts.length ? `<h2 class="sec">התראות</h2>` + d.alerts.map(a => `<div class="urow"><div>${esc(KIND[a.kind] || a.kind)}<small dir="ltr" style="text-align:right">${esc(a.who)} · ${new Date(a.t).toLocaleString('he-IL')}</small></div></div>`).join('') : '');
+    $('#users').querySelectorAll('[data-reset]').forEach(b => b.onclick = async () => {
+      if (!confirm(`לאפס את הסיסמה של ${b.dataset.name}?`)) return;
+      try { const r = await api(`/api/admin/users/${b.dataset.reset}/reset`, {}); b.outerHTML = `<span>סיסמה זמנית: <span class="temp">${esc(r.temp)}</span></span>`; }
+      catch (err) { toast(err.message); }
+    });
+  } catch (e) { $('#users').textContent = e.message; }
+}
+
+// ---------- הוספה ועריכה ----------
+let photoData;
+function showForm(r) {
+  photoData = undefined;
+  const cat = r ? r.cat : '';
+  openSheet(`
+    <div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>
+    <div class="in" style="padding-top:4px">
+      <h1 class="ftitle">${r ? 'עריכת מתכון' : 'מתכון חדש'}</h1>
+      <form id="rf" novalidate>
+        <label class="f"><span>שם המתכון</span><input class="inp" name="title" maxlength="80" value="${esc(r ? r.title : '')}" placeholder="למשל: עוגת השיש של סבתא"></label>
+        <div class="f" style="margin-bottom:14px"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">סוג</span>
+          <div class="cats">${CATS.map(c => `<button type="button" class="chip${cat === c[0] ? ' on' : ''}" data-cat="${c[0]}">${ic(c[0])}${c[1]}</button>`).join('')}</div></div>
+        <div class="f" style="margin-bottom:14px"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">תמונה <em style="font-style:normal;color:var(--soft);font-weight:400">(לא חובה)</em></span>
+          <div class="ph"><div class="prev" id="prev" style="${r && r.img ? `background-image:url('${esc(r.img)}')` : ''}">${r && r.img ? '' : ic('camera')}</div>
+          <label class="btn">${ic('camera')}בחירת תמונה<input type="file" accept="image/*" id="pfile" hidden></label>
+          ${r && r.img ? `<button type="button" class="btn" id="nophoto" aria-label="הסרת תמונה">${ic('trash')}</button>` : ''}</div></div>
+        <label class="f"><span>מצרכים <em>– כל מצרך בשורה. כותרת? מסיימים בנקודתיים, למשל "לרוטב:"</em></span>
+          <textarea class="inp" name="ing" placeholder="2 כוסות קמח&#10;3 ביצים&#10;לציפוי:&#10;100 גרם שוקולד">${esc(r ? (r.ing || []).join('\n') : '')}</textarea></label>
+        <label class="f"><span>אופן ההכנה <em>– כל שלב בשורה</em></span>
+          <textarea class="inp" name="steps" placeholder="מחממים תנור ל-180 מעלות&#10;מערבבים הכל בקערה">${esc(r ? (r.steps || []).join('\n') : '')}</textarea></label>
+        <label class="f"><span>כמות <em>(לא חובה)</em></span><input class="inp" name="servings" maxlength="40" value="${esc(r ? r.servings : '')}" placeholder="למשל: 6 מנות"></label>
+        <label class="f"><span>קישור למקור <em>(לא חובה)</em></span><input class="inp" name="url" type="url" dir="ltr" value="${esc(r ? r.url : '')}" placeholder="https://"></label>
+        <label class="f"><span>ממי המתכון <em>(לא חובה)</em></span><input class="inp" name="source" maxlength="80" value="${esc(r ? r.source : '')}" placeholder="למשל: סבתא רחל"></label>
+        <label class="f"><span>הערה <em>(לא חובה)</em></span><input class="inp" name="note" maxlength="600" value="${esc(r ? r.note : '')}" placeholder="טיפ, שינוי שעשיתם..."></label>
+        <div class="err" id="ferr"></div>
+        <button class="btn main wide" type="submit">${r ? 'שמירת שינויים' : 'הוספה לספר'}</button>
+        ${r && r.del ? `<button type="button" class="btn wide" id="del" style="margin-top:10px;color:#b3261e">${ic('trash')}מחיקת המתכון</button>` : ''}
+      </form>
+    </div>`);
+  sheet.querySelector('[data-x]').onclick = closeSheet;
+  let chosen = cat;
+  sheet.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => {
+    chosen = b.dataset.cat; sheet.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  $('#pfile').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!/^image\//.test(f.type)) return toast('אפשר לבחור רק תמונה');
+    try {
+      photoData = await shrink(f);
+      const p = $('#prev'); p.style.backgroundImage = `url('${photoData}')`; p.innerHTML = '';
+    } catch (err) { toast('לא הצלחנו לקרוא את התמונה'); }
+  };
+  const np = $('#nophoto'); if (np) np.onclick = () => { photoData = null; const p = $('#prev'); p.style.backgroundImage = ''; p.innerHTML = ic('camera'); np.remove(); };
+  const del = $('#del');
+  if (del) del.onclick = async () => {
+    if (!confirm('למחוק את המתכון לגמרי?')) return;
+    try { const d = await api(`/api/recipes/${r.id}/delete`, {}); RECIPES = d.recipes; paintGrid(); depth = 0; history.replaceState(null, '', location.pathname); route(); toast('המתכון נמחק'); }
+    catch (err) { $('#ferr').textContent = err.message; }
+  };
+  $('#rf').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    const btn = e.target.querySelector('button[type=submit]');
+    $('#ferr').textContent = '';
+    if (!f.title.trim()) return $('#ferr').textContent = 'צריך לתת למתכון שם';
+    if (!chosen) return $('#ferr').textContent = 'בחרו סוג מנה';
+    btn.disabled = true;
+    try {
+      const body = { ...f, cat: chosen, ing: f.ing.split('\n'), steps: f.steps.split('\n') };
+      if (photoData !== undefined) body.photo = photoData;
+      const d = await api(r ? `/api/recipes/${r.id}` : '/api/recipes', body);
+      RECIPES = d.recipes; paintGrid();
+      // מחליפים את הטופס במתכון עצמו
+      history.replaceState(null, '', '#r/' + d.id); route();
+      toast(r ? 'נשמר' : 'המתכון נוסף לספר');
+    } catch (err) { $('#ferr').textContent = err.message; btn.disabled = false; }
+  };
+}
+function shrink(file) {
+  return new Promise((ok, fail) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight; const max = 1200;
+      if (Math.max(w, h) > max) { const k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
+      let q = .82, out = c.toDataURL('image/jpeg', q);
+      while (out.length > 440000 && q > .4) { q -= .1; out = c.toDataURL('image/jpeg', q); }
+      ok(out);
+    };
+    img.onerror = fail; img.src = url;
+  });
+}
+
+// ---------- אירועים ----------
+$('#chips').addEventListener('click', (e) => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  FILTER = b.dataset.k; paintChips(); paintGrid(); scrollTo({ top: 0, behavior: 'smooth' });
+});
+$('#q').addEventListener('input', (e) => { QUERY = e.target.value; $('#sbox').classList.toggle('has', !!QUERY); paintGrid(); });
+$('#clr').onclick = () => { $('#q').value = ''; QUERY = ''; $('#sbox').classList.remove('has'); paintGrid(); };
+$('#grid').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c) go('r/' + c.dataset.id); });
+$('#fab').onclick = () => go('add');
+$('#acct').onclick = () => go(ME ? 'me' : 'login');
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet(); });
+
+paintChips(); paintAcct(); load();
+</script>
+</body>
+</html>
