@@ -156,6 +156,14 @@ export class RecipesDB extends DurableObject {
       this.sql.exec("INSERT INTO meta (k, v) VALUES ('family-public', '1')");
     }
     this.claimFamily();
+    // פעם אחת: נמרוד ביקש שנורית תהיה מי שפתחה את ספר המשפחה. נמרוד נשאר חבר בספר
+    if (!this.one("SELECT 1 AS x FROM meta WHERE k = 'family-owner-nurit'")) {
+      const n = this.q("SELECT u.id FROM users u JOIN members m ON m.user_id = u.id AND m.book_id = ? WHERE u.name LIKE '%נורית%'", FAMILY);
+      if (n.length === 1) {
+        this.sql.exec('UPDATE books SET owner = ? WHERE id = ?', n[0].id, FAMILY);
+        this.sql.exec("INSERT INTO meta (k, v) VALUES ('family-owner-nurit', ?)", String(n[0].id));
+      }
+    }
     this.sql.exec('DELETE FROM sessions WHERE created < ?', Date.now() - SESSION_DAYS * 864e5);
     // מתכונים מקבוצת הוואטסאפ: נכנסים פעם אחת. מתכון שנערך נשאר ערוך, מתכון שנמחק לא חוזר
     const now = Date.now();
@@ -207,7 +215,6 @@ export class RecipesDB extends DurableObject {
     const u = this.one('SELECT id FROM users WHERE email = ?', FAMILY_OWNER);
     if (!u) return;
     this.sql.exec('UPDATE books SET owner = ? WHERE id = ? AND owner IS NULL', u.id, FAMILY);
-    if (this.one('SELECT owner FROM books WHERE id = ?', FAMILY).owner === u.id)
       this.sql.exec('INSERT OR IGNORE INTO members (book_id, user_id, joined) VALUES (?, ?, ?)', FAMILY, u.id, Date.now());
   }
   newBook(name, ownerId) {
