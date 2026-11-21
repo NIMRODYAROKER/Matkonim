@@ -215,6 +215,7 @@ export class RecipesDB extends DurableObject {
     const u = this.one('SELECT id FROM users WHERE email = ?', FAMILY_OWNER);
     if (!u) return;
     this.sql.exec('UPDATE books SET owner = ? WHERE id = ? AND owner IS NULL', u.id, FAMILY);
+    if (this.one('SELECT owner FROM books WHERE id = ?', FAMILY).owner === u.id)
       this.sql.exec('INSERT OR IGNORE INTO members (book_id, user_id, joined) VALUES (?, ?, ?)', FAMILY, u.id, Date.now());
   }
   newBook(name, ownerId) {
