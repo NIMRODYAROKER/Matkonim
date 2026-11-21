@@ -222,13 +222,19 @@ export class RecipesDB extends DurableObject {
       id: b.id, name: b.name, private: !!b.private, family: b.id === FAMILY,
       mine: !!me && b.owner === me.id, member, locked: !view, owner: this.ownerName(b),
       count: this.one('SELECT COUNT(*) AS c FROM recipes WHERE book_id = ?', b.id).c,
+      covers: view ? this.covers(b.id) : [],
       invite: member ? b.invite : undefined
     };
   }
   myBooks(me) {
     return this.q(`SELECT b.*, (SELECT COUNT(*) FROM recipes r WHERE r.book_id = b.id) AS c, (SELECT name FROM users u WHERE u.id = b.owner) AS oname
       FROM members m JOIN books b ON b.id = m.book_id WHERE m.user_id = ? ORDER BY m.joined`, me.id)
-      .map(b => ({ id: b.id, name: b.name, private: !!b.private, mine: b.owner === me.id, owner: b.oname || '', count: b.c }));
+      .map(b => ({ id: b.id, name: b.name, private: !!b.private, mine: b.owner === me.id, owner: b.oname || '', count: b.c, covers: this.covers(b.id) }));
+  }
+  // עד 3 תמונות אחרונות מהספר, לשער של הספר במסך "הספרים שלי"
+  covers(bookId) {
+    return this.q("SELECT id, img, photo_v FROM recipes WHERE book_id = ? AND (photo_v > 0 OR img LIKE 'http%' OR img LIKE '/%') ORDER BY sort DESC LIMIT 3", bookId)
+      .map(r => r.photo_v ? `/api/photo/${r.id}?v=${r.photo_v}` : r.img);
   }
   view(me, b, extra) {
     if (!b) return { me: me ? this.meUser(me) : null, book: null, recipes: [], books: me ? this.myBooks(me) : [], ...(extra || {}) };

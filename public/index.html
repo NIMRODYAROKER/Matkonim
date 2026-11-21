@@ -166,13 +166,31 @@ button.brand{text-align:right;display:block}
 .brand p{display:flex;align-items:center;gap:3px}
 .brand p svg.i{width:16px;height:16px}
 .acct.bk{color:var(--ink)}
-.brow{width:100%;display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);text-align:right;border:2px solid transparent}
-.brow.on{border-color:var(--terra)}
-.brow .bico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#f3e2d3;color:var(--terra);flex:none}
-.brow .bt{flex:1;min-width:0}
-.brow b{display:block;font-size:16.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brow small{color:var(--soft);font-size:13px}
-.brow .cur{font-size:12.5px;color:var(--terra-d);font-weight:700}
+.bgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:4px}
+@media(min-width:640px){.bgrid{grid-template-columns:repeat(3,1fr);gap:18px}}
+.bkc{position:relative;display:block;width:100%;text-align:right;border-radius:20px;overflow:hidden;aspect-ratio:3/4;background:var(--bt,#c4633f);color:#fff;box-shadow:0 2px 4px rgba(60,40,20,.08),0 14px 30px rgba(60,40,20,.16);transition:transform .18s;animation:pop .35s ease both}
+.bkc:active{transform:scale(.97)}
+.bkc::before{content:'';position:absolute;top:0;bottom:0;right:0;width:9px;background:rgba(0,0,0,.18);z-index:2}
+.bkc .cv{position:absolute;inset:0;display:grid;gap:2px;grid-template-columns:1fr 1fr;grid-template-rows:1.4fr 1fr}
+.bkc .cv img{width:100%;height:100%;object-fit:cover;display:block}
+.bkc .cv.n1 img{grid-column:1/-1;grid-row:1/-1}
+.bkc .cv.n2 img{grid-row:1/-1}
+.bkc .cv.n3 img:first-child{grid-column:1/-1}
+.bkc .cv.n0{display:grid;place-items:center;grid-template-columns:1fr;grid-template-rows:1fr;background:radial-gradient(circle at 75% 20%,rgba(255,255,255,.28),transparent 55%)}
+.bkc .cv.n0 svg.i{width:38%;height:38%;stroke-width:1.1;opacity:.55;margin-bottom:30%}
+.bkc .sh{position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(20,14,10,.86) 0%,rgba(20,14,10,.45) 38%,rgba(20,14,10,0) 62%)}
+.bkc .cv.n0+.sh{background:linear-gradient(to top,rgba(0,0,0,.28),rgba(0,0,0,0) 55%)}
+.bkc .bt{position:absolute;inset:auto 0 0 0;z-index:3;padding:14px 22px 14px 14px}
+.bkc b{display:block;font-family:var(--serif);font-weight:900;font-size:19px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bkc small{display:block;margin-top:5px;font-size:12.5px;opacity:.85}
+.bkc .tag{position:absolute;top:10px;left:10px;z-index:3;display:flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--ink);font-size:12px;font-weight:700}
+.bkc .tag svg.i{width:13px;height:13px}
+.bkc .tag.cur{background:var(--terra);color:#fff}
+.bkc.on{outline:3px solid var(--terra);outline-offset:3px}
+.bhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.bhead small{color:var(--soft);font-size:14px}
+.newb{margin-top:18px;padding:16px;border-radius:20px;background:var(--card);box-shadow:var(--shadow)}
+.newb h2{font-family:var(--serif);font-size:20px;margin:0 0 4px}
 .nb{display:flex;gap:8px;margin-top:8px}
 .nb .inp{flex:1;min-width:0}
 .seg{display:flex;flex-direction:column;gap:8px}
@@ -530,24 +548,32 @@ async function loadUsers() {
 
 // ---------- הספרים שלי ----------
 const closeBar = () => `<div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>`;
+const BK_TONES = ['#c4633f', '#5f7442', '#b5832a', '#8a4f6b', '#3f6b7a', '#9a5a3c'];
+const bkTone = (id) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return BK_TONES[h % BK_TONES.length]; };
 function bookRow(b, viewing) {
   const who = b.mine ? 'שלי' : (b.owner ? 'של ' + esc(b.owner) : 'משותף');
-  return `<button class="brow${BOOK && b.id === BOOK.id ? ' on' : ''}" data-b="${esc(b.id)}">
-    <span class="bico">${ic(b.private ? 'lock' : 'book')}</span>
-    <span class="bt"><b>${esc(b.name)}</b><small>${b.count} מתכונים · ${who}${b.private ? ' · פרטי' : ''}${viewing ? ' · אתם צופים בו' : ''}</small></span>
-    ${BOOK && b.id === BOOK.id ? '<span class="cur">פתוח</span>' : ''}</button>`;
+  const open = BOOK && b.id === BOOK.id;
+  const cv = (b.covers || []).slice(0, 3);
+  const tag = open ? `<span class="tag cur">פתוח</span>` : b.private ? `<span class="tag">${ic('lock')}פרטי</span>` : '';
+  return `<button class="bkc${open ? ' on' : ''}" data-b="${esc(b.id)}" style="--bt:${bkTone(b.id)}">
+    <span class="cv n${cv.length}">${cv.length ? cv.map(u => `<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`).join('') : ic('book')}</span>
+    <span class="sh"></span>${tag}
+    <span class="bt"><b>${esc(b.name)}</b><small>${b.count} מתכונים · ${who}${viewing ? ' · צפייה' : ''}</small></span></button>`;
 }
 // inline=true: אין ספר פתוח, ורשימת הספרים היא המסך הראשי
 function booksHtml(inline) {
   const viewing = BOOK && !BOOKS.some(b => b.id === BOOK.id) && !BOOK.locked ? bookRow(BOOK, true) : '';
-  return `<h1 class="ftitle"${inline ? ' style="font-size:24px;margin-top:4px"' : ''}>${inline ? (ME ? 'עוד אין לכם ספרים' : 'ברוכים הבאים לספר המתכונים') : 'הספרים שלי'}</h1>
-      ${ME ? '' : `${viewing}<p class="hint" style="margin-top:6px">כאן שומרים מתכונים בספרים משותפים עם המשפחה והחברים. כדי לפתוח ספר או להצטרף לספר שהזמינו אתכם אליו, צריך להתחבר.</p><button class="btn main wide" id="blog">התחברות או הרשמה</button>`}
-      ${ME ? `<div id="blist">${BOOKS.map(b => bookRow(b)).join('')}${viewing}</div>
+  const n = BOOKS.length + (viewing ? 1 : 0);
+  const title = inline ? (ME ? 'עוד אין לכם ספרים' : 'ברוכים הבאים לספר המתכונים') : 'הספרים שלי';
+  return `<div class="bhead"><h1 class="ftitle"${inline ? ' style="font-size:24px;margin-top:4px"' : ''}>${title}</h1>${ME && n ? `<small>${n} ספרים</small>` : ''}</div>
+      ${ME ? '' : `${viewing ? `<div class="bgrid">${viewing}</div>` : ''}<p class="hint" style="margin-top:14px">כאן שומרים מתכונים בספרים משותפים עם המשפחה והחברים. כדי לפתוח ספר או להצטרף לספר שהזמינו אתכם אליו, צריך להתחבר.</p><button class="btn main wide" id="blog">התחברות או הרשמה</button>`}
+      ${ME ? `${n ? `<div class="bgrid" id="blist">${BOOKS.map(b => bookRow(b)).join('')}${viewing}</div>` : ''}
       ${inline ? '<p class="hint" style="margin-top:0">פתחו ספר חדש, או בקשו ממישהו לשלוח לכם הזמנה לספר שלו.</p>' : ''}
-      <h2 class="sec">ספר חדש</h2>
+      <div class="newb" id="newb">
+      <h2>ספר חדש</h2>
+      <p class="hint" style="margin:0 0 10px">ספר חדש נפתח ריק. אחרי שיוצרים אותו אפשר להזמין אליו אנשים בוואטסאפ.</p>
       <form class="nb" id="nb" novalidate><input class="inp" name="name" maxlength="40" placeholder="למשל: מתכונים של סבתא"><button class="btn main" type="submit">יצירה</button></form>
-      <div class="err" id="nberr"></div>
-      <p class="hint" style="margin-top:4px">ספר חדש נפתח ריק. אחרי שיוצרים אותו אפשר להזמין אליו אנשים בוואטסאפ.</p>` : ''}`;
+      <div class="err" id="nberr" style="margin-bottom:0"></div></div>` : ''}`;
 }
 function showBooks() {
   openSheet(`${closeBar()}<div class="in" style="padding-top:4px">${booksHtml(false)}</div>`);
