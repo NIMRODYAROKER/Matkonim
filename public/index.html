@@ -187,6 +187,8 @@ button.brand{text-align:right;display:block}
 .bkc .tag svg.i{width:13px;height:13px}
 .bkc .tag.cur{background:var(--terra);color:#fff}
 .bkc.on{outline:3px solid var(--terra);outline-offset:3px}
+.tline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 6px}
+.tline .round{flex:none}
 .bhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .bhead small{color:var(--soft);font-size:14px}
 .newb{margin-top:18px;padding:16px;border-radius:20px;background:var(--card);box-shadow:var(--shadow)}
@@ -210,7 +212,7 @@ button.brand{text-align:right;display:block}
   <header class="top">
     <img src="/logo.svg" alt="">
     <button class="brand" id="brand" aria-label="החלפת ספר"><h1 id="bname">מתכונים</h1><p>הספרים שלי<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></p></button>
-    <button class="acct bk" id="bset" aria-label="הגדרות הספר והזמנה" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M19 8v6M16 11h6"/></svg></button>
+    <button class="acct bk" id="bset" aria-label="הגדרות הספר: שם, הזמנה וחברים" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     <button class="acct out" id="acct" aria-label="חשבון"></button>
   </header>
   <div class="search">
@@ -404,6 +406,7 @@ function route() {
     if (r) return showRecipe(r);
     if (!LOADED) return; // עוד נטען
   } else if (h === 'add') return needLogin(() => (BOOK && BOOK.member) ? showForm(null) : (toast('רק מי שהוזמן לספר יכול להוסיף לו מתכונים'), toMain()));
+  else if ((m = h.match(/^s\/([\w-]+)$/))) { if (SHARED && SHARED.share === m[1]) return showRecipe(SHARED); return showShared(m[1]); }
   else if (h === 'books') return showBooks();
   else if (h === 'book' && BOOK) return showBookSettings();
   else if ((m = h.match(/^join\/([\w-]+)$/))) return showJoin(m[1]);
@@ -446,25 +449,44 @@ function showRecipe(r) {
       ${ing ? `<h2 class="sec">מצרכים <small>${ingCount} · לחיצה מסמנת שיש</small></h2><ul class="ing">${ing}</ul>` : ''}
       ${steps ? `<h2 class="sec">אופן ההכנה</h2><ol class="steps">${steps}</ol>` : ''}
       ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}
-      <div class="by">${r.by ? 'נוסף על ידי ' + esc(r.by) : 'מקבוצת המתכונים בוואטסאפ'}</div>
+      <div class="by">${r._shared && r._book ? 'מתוך ' + esc(r._book) + ' · ' : ''}${r.by ? 'נוסף על ידי ' + esc(r.by) : 'מקבוצת המתכונים בוואטסאפ'}</div>
     </div>`);
   sheet.dataset.id = r.id;
   if (ing || steps) keepAwake();
+  prepShare(r);
 }
 sheet.addEventListener('click', (e) => {
   const li = e.target.closest('ul.ing li:not(.head), ol.steps li');
   if (li) { li.classList.toggle('done'); return; }
   const a = e.target.closest('[data-act]'); if (!a) return;
-  const act = a.dataset.act, r = RECIPES.find(x => x.id === sheet.dataset.id);
+  const act = a.dataset.act, r = RECIPES.find(x => x.id === sheet.dataset.id) || (SHARED && SHARED.id === sheet.dataset.id ? SHARED : null);
   if (act === 'close') closeSheet();
   else if (act === 'edit' && r) go('edit/' + r.id);
   else if (act === 'share' && r) shareRecipe(r);
 });
+// קישור שיתוף אישי למתכון: נפתח לכל מי שמקבל אותו, גם מספר פרטי, ומראה רק את המתכון הזה
+const SHARE = {};
+async function prepShare(r) {
+  if (r.share) SHARE[r.id] = r.share;
+  if (SHARE[r.id]) return SHARE[r.id];
+  try { const d = await api(`/api/recipes/${r.id}/share`, {}); SHARE[r.id] = d.token; } catch (e) {}
+  return SHARE[r.id];
+}
 async function shareRecipe(r) {
-  const url = location.origin + '/#r/' + r.id;
-  const text = r.title + ' – מתוך ' + (BOOK ? BOOK.name : 'ספר המתכונים');
-  if (navigator.share) { try { await navigator.share({ title: r.title, text, url }); } catch (e) {} return; }
+  const tok = SHARE[r.id] || await prepShare(r);
+  const url = location.origin + '/' + (tok ? '#s/' + tok : '#r/' + r.id);
+  const from = r._book || (BOOK ? BOOK.name : '');
+  const text = 'מתכון: ' + r.title + (from ? ' (מתוך ' + from + ')' : '');
+  if (navigator.share) { try { await navigator.share({ title: r.title, text, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank', 'noopener');
+}
+let SHARED = null;
+async function showShared(token) {
+  try {
+    const d = await api('/api/shared/' + encodeURIComponent(token));
+    SHARED = { ...d.recipe, _book: d.book, _shared: true };
+    showRecipe(SHARED);
+  } catch (e) { toast(e.message); toMain(); }
 }
 
 // ---------- התחברות ----------
@@ -534,7 +556,7 @@ function showAccount() {
 async function loadUsers() {
   try {
     const d = await api('/api/admin/users');
-    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול', 'book-denied': 'ניסיון לגשת לספר בלי הרשאה' };
+    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול', 'book-denied': 'ניסיון לגשת לספר בלי הרשאה', 'share-denied': 'ניסיון לשתף מתכון מספר פרטי בלי הרשאה' };
     $('#users').innerHTML = d.users.map(u => `<div class="urow"><div>${esc(u.name)}<small dir="ltr" style="text-align:right">${esc(u.email)}</small></div>
       ${u.id === ME.id ? '' : `<button class="btn" data-reset="${u.id}" data-name="${esc(u.name)}">איפוס סיסמה</button>`}</div>`).join('') +
       (d.alerts.length ? `<h2 class="sec">התראות</h2>` + d.alerts.map(a => `<div class="urow"><div>${esc(KIND[a.kind] || a.kind)}<small dir="ltr" style="text-align:right">${esc(a.who)} · ${new Date(a.t).toLocaleString('he-IL')}</small></div></div>`).join('') : '');
@@ -605,7 +627,9 @@ function showBookSettings() {
   const b = BOOK;
   openSheet(`${closeBar()}
     <div class="in" style="padding-top:4px">
-      <h1 class="ftitle" style="margin-bottom:6px">${esc(b.name)}</h1>
+      <div class="tline"><h1 class="ftitle" style="margin:0">${esc(b.name)}</h1>${b.mine ? `<button class="round" id="renbtn" aria-label="עריכת שם הספר">${ic('edit')}</button>` : ''}</div>
+      ${b.mine ? `<div id="renbox" hidden><form class="nb" id="ren" novalidate style="margin-top:10px"><input class="inp" name="name" maxlength="40" value="${esc(b.name)}"><button class="btn main" type="submit">שמירה</button></form>
+        <div class="err" id="renerr"></div></div>` : ''}
       <p class="hint" style="margin:0 0 18px">${b.count} מתכונים${b.owner ? ' · נפתח על ידי ' + esc(b.mine ? 'אותך' : b.owner) : ''}</p>
       ${b.member ? `<h2 class="sec" style="margin-top:6px">הזמנה לספר</h2>
         <p class="hint" style="margin:0 0 10px">מי שנכנס לקישור ונרשם יכול לראות את הספר ולהוסיף ולערוך בו מתכונים.</p>
@@ -616,9 +640,7 @@ function showBookSettings() {
           <button data-p="0" class="${b.private ? '' : 'on'}">${ic('globe')}<span>ציבורי<small>כל מי שיש לו קישור יכול לקרוא. להוסיף ולערוך רק מי שהוזמן</small></span></button>
           <button data-p="1" class="${b.private ? 'on' : ''}">${ic('lock')}<span>פרטי<small>רק מי שהוזמן לספר יכול לראות אותו</small></span></button>
         </div>
-        <h2 class="sec">שם הספר</h2>
-        <form class="nb" id="ren" novalidate><input class="inp" name="name" maxlength="40" value="${esc(b.name)}"><button class="btn dark" type="submit">שמירה</button></form>
-        <div class="err" id="renerr"></div>` : ''}
+` : ''}
       ${b.member ? `<h2 class="sec">${ic('people')}חברים בספר</h2><div id="mem"><div class="spin"></div></div>` : ''}
       ${b.member && !b.mine ? '<button class="btn wide" id="leave" style="margin-top:22px;color:#b3261e">יציאה מהספר</button>' : ''}
       ${b.mine && !b.family ? `<button class="btn wide" id="bdel" style="margin-top:22px;color:#b3261e">${ic('trash')}מחיקת הספר</button>` : ''}
@@ -635,6 +657,7 @@ function showBookSettings() {
     try { apply(await api(`/api/books/${b.id}`, { private: x.dataset.p === '1' })); showBookSettings(); toast(BOOK.private ? 'הספר פרטי עכשיו' : 'הספר ציבורי עכשיו'); }
     catch (e) { toast(e.message); }
   });
+  on('renbtn', () => { const bx = $('#renbox'); bx.hidden = !bx.hidden; if (!bx.hidden) { const i = bx.querySelector('input'); i.focus(); i.select(); } });
   const ren = $('#ren');
   if (ren) ren.onsubmit = async (e) => {
     e.preventDefault(); $('#renerr').textContent = '';

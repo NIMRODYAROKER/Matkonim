@@ -140,6 +140,9 @@ export class RecipesDB extends DurableObject {
     `);
     // ספרים: כל מתכון שייך לספר. מה שהיה עד עכשיו נכנס לספר של המשפחה
     try { this.sql.exec("ALTER TABLE recipes ADD COLUMN book_id TEXT NOT NULL DEFAULT 'family'"); } catch (e) { /* העמודה כבר קיימת */ }
+    // שיתוף מתכון: קישור אישי לכל מתכון, שפותח רק את המתכון הזה גם מספר פרטי
+    try { this.sql.exec('ALTER TABLE recipes ADD COLUMN share TEXT'); } catch (e) { /* העמודה כבר קיימת */ }
+    this.sql.exec('CREATE UNIQUE INDEX IF NOT EXISTS recipes_share ON recipes (share)');
     this.sql.exec('CREATE INDEX IF NOT EXISTS recipes_book ON recipes (book_id, sort)');
     this.sql.exec('CREATE INDEX IF NOT EXISTS members_user ON members (user_id)');
     if (!this.one('SELECT 1 AS x FROM books WHERE id = ?', FAMILY)) {
@@ -331,6 +334,29 @@ export class RecipesDB extends DurableObject {
       if (!b) throw new HttpError(404, 'קישור ההזמנה לא תקף. בקשו קישור חדש');
       const me = this.auth(request, true);
       return json({ book: { id: b.id, name: b.name, owner: this.ownerName(b) }, member: this.isMember(me, b) });
+    }
+    // ----- שיתוף מתכון -----
+    if ((m = path.match(/^\/api\/recipes\/([\w-]+)\/share$/)) && method === 'POST') {
+      if (L.over('shr:' + ip, 60, 600e3)) throw new HttpError(429, 'יותר מדי שיתופים. חכו כמה דקות');
+      L.add('shr:' + ip, 600e3);
+      const me = this.auth(request, true);
+      const r = this.one('SELECT id, book_id, share FROM recipes WHERE id = ?', m[1]);
+      const b = r ? this.book(r.book_id) : null;
+      if (!r || !b) throw new HttpError(404, 'המתכון לא נמצא');
+      if (!this.canView(me, b)) { this.secLog('share-denied', me ? me.email : '', ip); throw new HttpError(403, 'אין הרשאה לשתף את המתכון הזה'); }
+      let token = r.share;
+      if (!token) { token = randomId(12); this.sql.exec('UPDATE recipes SET share = ? WHERE id = ?', token, r.id); }
+      return json({ token });
+    }
+    if ((m = path.match(/^\/api\/shared\/([\w-]+)$/)) && method === 'GET') {
+      if (L.over('shg:' + ip, 60, 600e3)) throw new HttpError(429, 'יותר מדי בקשות. חכו כמה דקות');
+      L.add('shg:' + ip, 600e3);
+      const r = this.one('SELECT * FROM recipes WHERE share = ?', m[1]);
+      if (!r) throw new HttpError(404, 'הקישור למתכון לא תקף, אולי המתכון נמחק');
+      const b = this.book(r.book_id);
+      const u = r.by_user ? this.one('SELECT name FROM users WHERE id = ?', r.by_user) : null;
+      const names = new Map(u ? [[r.by_user, u.name]] : []);
+      return json({ recipe: { ...this.pub(r, null, names, b, false), share: r.share }, book: b ? b.name : '' });
     }
     if ((m = path.match(/^\/api\/photo\/([\w-]+)$/)) && method === 'GET') {
       const r = this.one('SELECT photo FROM recipes WHERE id = ?', m[1]);
