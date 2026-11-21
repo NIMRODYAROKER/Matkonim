@@ -262,7 +262,7 @@ export class RecipesDB extends DurableObject {
   ownBook(me, id, ip) {
     const b = this.book(id);
     if (!b) throw new HttpError(404, 'הספר לא נמצא');
-    if (b.owner !== me.id) { this.secLog('book-denied', me.email, ip); throw new HttpError(403, 'רק מי שפתח את הספר יכול לעשות את זה'); }
+    if (b.owner !== me.id) { this.secLog('book-denied', me.email, ip); throw new HttpError(403, 'רק מנהל הספר יכול לעשות את זה'); }
     return b;
   }
   memberBook(me, id, ip) {
@@ -473,11 +473,11 @@ export class RecipesDB extends DurableObject {
       return json({ members: this.q('SELECT u.id, u.name, u.color FROM members m JOIN users u ON u.id = m.user_id WHERE m.book_id = ? ORDER BY m.joined', b.id)
         .map(u => ({ ...u, owner: u.id === b.owner })) });
     }
-    if ((m = path.match(/^\/api\/books\/([\w-]+)(?:\/(invite|remove|leave|delete))?$/)) && method === 'POST') {
+    if ((m = path.match(/^\/api\/books\/([\w-]+)(?:\/(invite|remove|leave|delete|transfer))?$/)) && method === 'POST') {
       const act = m[2] || 'update';
       if (act === 'leave') {
         const b = this.memberBook(me, m[1], ip);
-        if (b.owner === me.id) bad('אי אפשר לצאת מספר שפתחתם');
+        if (b.owner === me.id) bad('מנהל הספר לא יכול לצאת ממנו. קודם מעבירים את הניהול למישהו אחר');
         this.sql.exec('DELETE FROM members WHERE book_id = ? AND user_id = ?', b.id, me.id);
         return json({ ok: true });
       }
@@ -491,6 +491,13 @@ export class RecipesDB extends DurableObject {
         if (body.private !== undefined) this.sql.exec('UPDATE books SET private = ? WHERE id = ?', body.private ? 1 : 0, b.id);
       } else if (act === 'invite') {
         this.sql.exec('UPDATE books SET invite = ? WHERE id = ?', randomId(12), b.id);
+      } else if (act === 'transfer') {
+        const uid = +body.user;
+        if (!uid || uid === me.id) bad('צריך לבחור מישהו אחר מהספר');
+        if (!this.one('SELECT 1 AS x FROM members WHERE book_id = ? AND user_id = ?', b.id, uid)) bad('אפשר להעביר את הניהול רק למי שחבר בספר');
+        if (this.one('SELECT COUNT(*) AS c FROM books WHERE owner = ?', uid).c >= MAX_BOOKS) bad('למשתמש הזה כבר יש יותר מדי ספרים בניהולו');
+        this.sql.exec('UPDATE books SET owner = ? WHERE id = ? AND owner = ?', uid, b.id, me.id);
+        this.secLog('book-transfer', me.email, ip);
       } else if (act === 'remove') {
         const uid = +body.user;
         if (!uid || uid === me.id) bad('אי אפשר להוציא את עצמכם');

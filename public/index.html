@@ -573,7 +573,7 @@ const closeBar = () => `<div class="bar"><button class="round" data-x="close" ar
 const BK_TONES = ['#c4633f', '#5f7442', '#b5832a', '#8a4f6b', '#3f6b7a', '#9a5a3c'];
 const bkTone = (id) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return BK_TONES[h % BK_TONES.length]; };
 function bookRow(b, viewing) {
-  const who = b.mine ? 'שלי' : (b.owner ? 'של ' + esc(b.owner) : 'משותף');
+  const who = b.mine ? 'בניהולי' : (b.owner ? 'בניהול ' + esc(b.owner) : 'משותף');
   const open = BOOK && b.id === BOOK.id;
   const cv = (b.covers || []).slice(0, 3);
   const tag = open ? `<span class="tag cur">פתוח</span>` : b.private ? `<span class="tag">${ic('lock')}פרטי</span>` : '';
@@ -630,7 +630,7 @@ function showBookSettings() {
       <div class="tline"><h1 class="ftitle" style="margin:0">${esc(b.name)}</h1>${b.mine ? `<button class="round" id="renbtn" aria-label="עריכת שם הספר">${ic('edit')}</button>` : ''}</div>
       ${b.mine ? `<div id="renbox" hidden><form class="nb" id="ren" novalidate style="margin-top:10px"><input class="inp" name="name" maxlength="40" value="${esc(b.name)}"><button class="btn main" type="submit">שמירה</button></form>
         <div class="err" id="renerr"></div></div>` : ''}
-      <p class="hint" style="margin:0 0 18px">${b.count} מתכונים${b.owner ? ' · נפתח ' + (b.mine ? 'על ידך' : 'על ידי ' + esc(b.owner)) : ''}</p>
+      <p class="hint" style="margin:0 0 18px">${b.count} מתכונים${b.owner ? ' · מנהל הספר: ' + (b.mine ? 'אני' : esc(b.owner)) : ''}</p>
       ${b.member ? `<h2 class="sec" style="margin-top:6px">הזמנה לספר</h2>
         <p class="hint" style="margin:0 0 10px">מי שנכנס לקישור ונרשם יכול לראות את הספר ולהוסיף ולערוך בו מתכונים.</p>
         <div class="acts" style="margin-top:0"><button class="btn main" id="inv">${ic('share')}שליחת הזמנה בוואטסאפ</button><button class="btn" id="cpy">${ic('copy')}העתקת הקישור</button></div>
@@ -674,8 +674,12 @@ async function loadMembers(b) {
   try {
     const d = await api(`/api/books/${b.id}/members`);
     $('#mem').innerHTML = d.members.map(u => `<div class="urow"><div class="who"><span class="dot" style="background:${esc(u.color)}">${esc((u.name || '?').charAt(0))}</span>
-      <div>${esc(u.name)}${ME && u.id === ME.id ? ' (אני)' : ''}<small>${u.owner ? 'פתח את הספר' : 'חבר בספר'}</small></div></div>
-      ${b.mine && !u.owner ? `<button class="btn" data-rm="${u.id}" data-name="${esc(u.name)}" style="height:38px">הוצאה</button>` : ''}</div>`).join('');
+      <div>${esc(u.name)}${ME && u.id === ME.id ? ' (אני)' : ''}<small>${u.owner ? 'מנהל הספר' : 'חבר בספר'}</small></div></div>
+      ${b.mine && !u.owner ? `<div style="display:flex;gap:6px"><button class="btn" data-mg="${u.id}" data-name="${esc(u.name)}" style="height:38px">הפיכה למנהל</button><button class="btn" data-rm="${u.id}" data-name="${esc(u.name)}" style="height:38px">הוצאה</button></div>` : ''}</div>`).join('');
+    $('#mem').querySelectorAll('[data-mg]').forEach(x => x.onclick = async () => {
+      if (!confirm(`להעביר את ניהול הספר ל${x.dataset.name}? אחרי זה רק ${x.dataset.name} יוכל/תוכל לשנות הגדרות, להוציא אנשים או למחוק את הספר. אתם תישארו חברים בספר.`)) return;
+      try { apply(await api(`/api/books/${b.id}/transfer`, { user: +x.dataset.mg })); showBookSettings(); toast('הניהול הועבר ל' + x.dataset.name); } catch (e) { toast(e.message); }
+    });
     $('#mem').querySelectorAll('[data-rm]').forEach(x => x.onclick = async () => {
       if (!confirm(`להוציא את ${x.dataset.name} מהספר?`)) return;
       try { await api(`/api/books/${b.id}/remove`, { user: +x.dataset.rm }); x.closest('.urow').remove(); toast('הוצא מהספר'); } catch (e) { toast(e.message); }
