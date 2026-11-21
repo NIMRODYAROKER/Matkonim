@@ -170,8 +170,16 @@ export class RecipesDB extends DurableObject {
     // קטגוריות: קינוחים ומאפים אוחדו. מתכון מהקבוצה שאף אחד לא ערך מקבל את הקטגוריה מהקובץ
     this.sql.exec("UPDATE recipes SET cat = 'bake' WHERE cat = 'sweet'");
     for (const r of SEED) {
-      const ex = this.one('SELECT cat, by_user, edited_by FROM recipes WHERE id = ?', r.id);
-      if (ex) { if (ex.by_user === null && ex.edited_by === null && ex.cat !== r.cat) this.sql.exec('UPDATE recipes SET cat = ? WHERE id = ?', r.cat, r.id); continue; }
+      const ex = this.one('SELECT cat, by_user, edited_by, img, photo_v FROM recipes WHERE id = ?', r.id);
+      if (ex) {
+        if (ex.by_user === null && ex.edited_by === null && ex.cat !== r.cat) this.sql.exec('UPDATE recipes SET cat = ? WHERE id = ?', r.cat, r.id);
+        // תמונה שנוספה לקובץ אחרי שהמתכון כבר נכנס: נכנסת פעם אחת, רק אם למתכון עדיין אין תמונה (מי שהסיר תמונה, היא לא חוזרת)
+        if (r.img && !ex.img && !ex.photo_v && !this.one('SELECT 1 AS x FROM meta WHERE k = ?', 'seed-img-' + r.id)) {
+          this.sql.exec('UPDATE recipes SET img = ? WHERE id = ?', r.img, r.id);
+          this.sql.exec('INSERT INTO meta (k, v) VALUES (?, ?)', 'seed-img-' + r.id, '1');
+        }
+        continue;
+      }
       if (this.one('SELECT 1 AS x FROM seed_removed WHERE id = ?', r.id)) continue;
       const sort = r.date ? Date.parse(r.date + 'T12:00:00Z') : now - 400 * 864e5;
       this.sql.exec(`INSERT INTO recipes (id, book_id, cat, title, source, url, img, servings, note, ing, steps, video, by_user, sort, created, updated)
