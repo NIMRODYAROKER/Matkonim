@@ -122,12 +122,8 @@ header.top img{width:46px;height:46px;border-radius:13px;box-shadow:var(--shadow
 h2.sec{font-family:var(--serif);font-size:22px;margin:26px 0 10px;display:flex;align-items:baseline;gap:8px}
 h2.sec small{font-family:var(--sans);font-size:13px;color:var(--soft);font-weight:400}
 ul.ing{list-style:none;margin:0;padding:0;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
-ul.ing li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line);line-height:1.45;cursor:pointer;transition:.15s}
+ul.ing li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line);line-height:1.45}
 ul.ing li:first-child{border-top:0}
-ul.ing li .box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid #cdbda8;margin-top:1px;display:grid;place-items:center;transition:.15s}
-ul.ing li.done{color:#a99b8d;text-decoration:line-through}
-ul.ing li.done .box{background:var(--olive);border-color:var(--olive)}
-ul.ing li.done .box::after{content:'';width:10px;height:5px;border:solid #fff;border-width:0 0 2.4px 2.4px;transform:rotate(-45deg) translate(1px,-1px)}
 ul.ing li.head{cursor:default;font-weight:700;background:#f3e9da;color:var(--terra-d);padding:9px 14px;font-size:14.5px}
 ol.steps{list-style:none;margin:0;padding:0;counter-reset:s}
 ol.steps li{position:relative;padding:14px 50px 14px 14px;margin-bottom:10px;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);line-height:1.6;cursor:pointer;transition:.2s}
@@ -425,7 +421,7 @@ function showRecipe(r) {
   const c = CAT[r.cat] || CAT.side;
   const host = (() => { try { return new URL(r.url).hostname.replace(/^www\.|^m\.|^mobile\./, ''); } catch (e) { return ''; } })();
   const isVideo = /instagram|facebook|tiktok|youtu/.test(host);
-  const ing = (r.ing || []).map(x => /[:：]\s*$/.test(x) ? `<li class="head">${esc(x.replace(/[:：]\s*$/, ''))}</li>` : `<li><span class="box"></span><span>${esc(x)}</span></li>`).join('');
+  const ing = (r.ing || []).map(x => /[:：]\s*$/.test(x) ? `<li class="head">${esc(x.replace(/[:：]\s*$/, ''))}</li>` : `<li><span>${esc(x)}</span></li>`).join('');
   const steps = (r.steps || []).map(x => `<li>${esc(x)}</li>`).join('');
   const ingCount = (r.ing || []).filter(x => !/[:：]\s*$/.test(x)).length;
   openSheet(`
@@ -446,7 +442,7 @@ function showRecipe(r) {
       ${r.video ? `<div class="vid"><p>המתכון הזה נמצא בתוך הסרטון.<br>אפשר לצפות בו, ואם תרצו לכתוב אותו כאן לכולם.</p>
         <a class="btn main" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${ic('play')}צפייה בסרטון</a>
         ${r.edit ? `<div style="height:8px"></div><button class="btn" data-act="edit">${ic('edit')}לכתוב את המתכון</button>` : ''}</div>` : ''}
-      ${ing ? `<h2 class="sec">מצרכים <small>${ingCount} · לחיצה מסמנת שיש</small></h2><ul class="ing">${ing}</ul>` : ''}
+      ${ing ? `<h2 class="sec">מצרכים <small>${ingCount}</small></h2><ul class="ing">${ing}</ul>` : ''}
       ${steps ? `<h2 class="sec">אופן ההכנה</h2><ol class="steps">${steps}</ol>` : ''}
       ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}
       <div class="by">${r._shared && r._book ? 'מתוך ' + esc(r._book) + ' · ' : ''}${r.by ? 'נוסף על ידי ' + esc(r.by) : 'מקבוצת המתכונים בוואטסאפ'}</div>
@@ -456,7 +452,7 @@ function showRecipe(r) {
   prepShare(r);
 }
 sheet.addEventListener('click', (e) => {
-  const li = e.target.closest('ul.ing li:not(.head), ol.steps li');
+  const li = e.target.closest('ol.steps li');
   if (li) { li.classList.toggle('done'); return; }
   const a = e.target.closest('[data-act]'); if (!a) return;
   const act = a.dataset.act, r = RECIPES.find(x => x.id === sheet.dataset.id) || (SHARED && SHARED.id === sheet.dataset.id ? SHARED : null);
