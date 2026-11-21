@@ -146,8 +146,14 @@ export class RecipesDB extends DurableObject {
     this.sql.exec('CREATE INDEX IF NOT EXISTS recipes_book ON recipes (book_id, sort)');
     this.sql.exec('CREATE INDEX IF NOT EXISTS members_user ON members (user_id)');
     if (!this.one('SELECT 1 AS x FROM books WHERE id = ?', FAMILY)) {
-      this.sql.exec('INSERT INTO books (id, name, owner, private, invite, created) VALUES (?, ?, NULL, 1, ?, ?)',
+      this.sql.exec('INSERT INTO books (id, name, owner, private, invite, created) VALUES (?, ?, NULL, 0, ?, ?)',
         FAMILY, 'ספר המתכונים של המשפחה', randomId(12), Date.now());
+    }
+    // פעם אחת בלבד: הספר של המשפחה הופך לציבורי (ברירת המחדל לכל הספרים). אחר כך הבעלים יכול לשנות כרצונו
+    this.sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)');
+    if (!this.one("SELECT 1 AS x FROM meta WHERE k = 'family-public'")) {
+      this.sql.exec('UPDATE books SET private = 0 WHERE id = ?', FAMILY);
+      this.sql.exec("INSERT INTO meta (k, v) VALUES ('family-public', '1')");
     }
     this.claimFamily();
     this.sql.exec('DELETE FROM sessions WHERE created < ?', Date.now() - SESSION_DAYS * 864e5);
