@@ -160,6 +160,27 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.55}
 .temp{font-family:monospace;font-size:18px;background:#f9ecc9;padding:2px 8px;border-radius:6px;user-select:all}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:14px;font-size:15px;opacity:0;transition:.25s;z-index:40;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+[hidden]{display:none!important}
+button.brand{text-align:right;display:block}
+.brand h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(22px,7vw,30px);padding-bottom:2px}
+.brand p{display:flex;align-items:center;gap:3px}
+.brand p svg.i{width:16px;height:16px}
+.acct.bk{color:var(--ink)}
+.brow{width:100%;display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);text-align:right;border:2px solid transparent}
+.brow.on{border-color:var(--terra)}
+.brow .bico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#f3e2d3;color:var(--terra);flex:none}
+.brow .bt{flex:1;min-width:0}
+.brow b{display:block;font-size:16.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow small{color:var(--soft);font-size:13px}
+.brow .cur{font-size:12.5px;color:var(--terra-d);font-weight:700}
+.nb{display:flex;gap:8px;margin-top:8px}
+.nb .inp{flex:1;min-width:0}
+.seg{display:flex;flex-direction:column;gap:8px}
+.seg button{display:flex;gap:10px;align-items:flex-start;text-align:right;padding:12px 14px;border-radius:14px;background:var(--card);border:2px solid var(--line);line-height:1.4}
+.seg button.on{border-color:var(--terra);background:#fff4ea}
+.seg button small{display:block;color:var(--soft);font-size:13px}
+.dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex:none}
+.urow .who{display:flex;align-items:center;gap:10px}
 .loading{display:grid;place-items:center;padding:80px 0;color:var(--soft)}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--terra);animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -170,7 +191,8 @@ textarea.inp{min-height:150px;resize:vertical;line-height:1.55}
 <div class="wrap">
   <header class="top">
     <img src="/logo.svg" alt="">
-    <div class="brand"><h1>מתכונים</h1><p>ספר המתכונים של המשפחה</p></div>
+    <button class="brand" id="brand" aria-label="החלפת ספר"><h1 id="bname">מתכונים</h1><p>הספרים שלי<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></p></button>
+    <button class="acct bk" id="bset" aria-label="הגדרות הספר והזמנה" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M19 8v6M16 11h6"/></svg></button>
     <button class="acct out" id="acct" aria-label="חשבון"></button>
   </header>
   <div class="search">
@@ -212,7 +234,12 @@ const IC = {
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
   people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .7 3.2 2.7 3.8 5.5"/>',
   camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
-  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  book:'<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9 7h6"/>',
+  lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  add:'<path d="M19 8v6M16 11h6"/><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/>'
 };
 const ic = (n) => `<svg class="i" viewBox="0 0 24 24">${IC[n]}</svg>`;
 const CATS = [
@@ -232,9 +259,11 @@ const CAT = Object.fromEntries(CATS.map(c => [c[0], {name:c[1], tint:c[2], tone:
 // ---------- מצב ----------
 const $ = (s, el = document) => el.querySelector(s);
 let RECIPES = [], ME = null, FILTER = 'all', QUERY = '';
-let TOKEN = '';
-try { TOKEN = localStorage.getItem('mk_token') || ''; } catch (e) {}
+let BOOK = null, BOOKS = [], LOADED = false;
+let TOKEN = '', CUR = '';
+try { TOKEN = localStorage.getItem('mk_token') || ''; CUR = localStorage.getItem('mk_book') || ''; } catch (e) {}
 const setToken = (t) => { TOKEN = t || ''; try { t ? localStorage.setItem('mk_token', t) : localStorage.removeItem('mk_token'); } catch (e) {} };
+const setCur = (b) => { CUR = b || ''; try { b ? localStorage.setItem('mk_book', b) : localStorage.removeItem('mk_book'); } catch (e) {} };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 async function api(path, body) {
@@ -280,10 +309,16 @@ function picHtml(r, cls) {
   return `<div class="${cls}" style="--tint:${c.tint}">${tile}${img}${r.video ? `<span class="badge">${ic('play')}סרטון</span>` : ''}</div>`;
 }
 function paintGrid() {
+  const none = LOADED && !BOOK;
+  $('.search').hidden = none; $('#count').hidden = none;
+  if (none) { $('#grid').innerHTML = `<div style="grid-column:1/-1">${booksHtml(true)}</div>`; bindBooks($('#grid')); return; }
   const list = visible();
-  $('#count').textContent = QUERY || FILTER !== 'all' ? (list.length ? `${list.length} מתכונים` : '') : `${RECIPES.length} מתכונים בספר`;
+  $('#count').textContent = QUERY || FILTER !== 'all' ? (list.length ? `${list.length} מתכונים` : '') : (RECIPES.length ? `${RECIPES.length} מתכונים בספר` : '');
   if (!list.length) {
-    $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><b>לא מצאנו</b>נסו מילה אחרת, או הוסיפו את המתכון בעצמכם</div>`;
+    let msg = '<b>לא מצאנו</b>נסו מילה אחרת, או הוסיפו את המתכון בעצמכם';
+    if (BOOK && BOOK.locked) msg = '<b>הספר הזה פרטי</b>רק מי שהוזמן לספר יכול לראות אותו';
+    else if (!RECIPES.length) msg = BOOK && BOOK.member ? '<b>הספר ריק עדיין</b>לחצו על "מתכון חדש" כדי להוסיף את המתכון הראשון' : '<b>הספר ריק עדיין</b>';
+    $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1">${msg}</div>`;
     return;
   }
   $('#grid').innerHTML = list.map((r, i) => `<button class="card" data-id="${esc(r.id)}" style="animation-delay:${Math.min(i, 12) * 25}ms">
@@ -296,13 +331,40 @@ function paintAcct() {
   if (ME) { b.className = 'acct'; b.style.background = ME.color; b.textContent = (ME.name || '?').trim().charAt(0); }
   else { b.className = 'acct out'; b.style.background = ''; b.innerHTML = ic('user'); }
 }
-async function load() {
-  try {
-    const d = await api('/api/recipes');
-    RECIPES = d.recipes; ME = d.me; paintAcct(); paintGrid(); route();
-  } catch (e) {
-    $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><b>לא הצלחנו לטעון</b>${esc(e.message)}</div>`;
-  }
+function paintBook() {
+  $('#bname').textContent = BOOK ? BOOK.name : 'מתכונים';
+  document.title = BOOK ? BOOK.name + ' – מתכונים' : 'מתכונים';
+  $('#bset').hidden = !(BOOK && BOOK.member);
+  $('#fab').hidden = !BOOK || BOOK.locked || (!!ME && !BOOK.member);
+}
+function apply(d) {
+  const changed = !BOOK || !d.book || BOOK.id !== d.book.id;
+  RECIPES = d.recipes; ME = d.me; BOOK = d.book; BOOKS = d.books || []; LOADED = true;
+  setCur(BOOK ? BOOK.id : '');
+  if (changed) { FILTER = 'all'; QUERY = ''; $('#q').value = ''; $('#sbox').classList.remove('has'); paintChips(); }
+  paintAcct(); paintBook(); paintGrid();
+}
+// טוען את הספר הפתוח (או ספר/מתכון מסוים מקישור)
+async function load(q) {
+  const qs = q || (CUR ? 'book=' + encodeURIComponent(CUR) : '');
+  const d = await api('/api/recipes' + (qs ? '?' + qs : ''));
+  apply(d);
+  if (d.denied) toast('הספר הזה פרטי. אפשר לראות אותו רק בהזמנה');
+  return d;
+}
+async function start() {
+  const h = decodeURIComponent(location.hash.slice(1));
+  let m, q = '';
+  if ((m = h.match(/^r\/([\w-]+)$/))) q = 'recipe=' + m[1];
+  else if ((m = h.match(/^b\/([\w-]+)$/))) { q = 'book=' + m[1]; history.replaceState(null, '', location.pathname); }
+  try { await load(q); route(); }
+  catch (e) { $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1"><b>לא הצלחנו לטעון</b>${esc(e.message)}</div>`; }
+}
+function toMain() { depth = 0; history.replaceState(null, '', location.pathname); route(); scrollTo({ top: 0 }); }
+async function switchBook(id) {
+  setCur(id);
+  try { await load(); } catch (e) { return toast(e.message); }
+  toMain();
 }
 
 // ---------- ניווט ----------
@@ -322,8 +384,11 @@ function route() {
   if ((m = h.match(/^r\/([\w-]+)$/))) {
     const r = RECIPES.find(x => x.id === m[1]);
     if (r) return showRecipe(r);
-    if (!RECIPES.length) return; // עוד נטען
-  } else if (h === 'add') return needLogin(() => showForm(null));
+    if (!LOADED) return; // עוד נטען
+  } else if (h === 'add') return needLogin(() => (BOOK && BOOK.member) ? showForm(null) : (toast('רק מי שהוזמן לספר יכול להוסיף לו מתכונים'), toMain()));
+  else if (h === 'books') return showBooks();
+  else if (h === 'book' && BOOK) return showBookSettings();
+  else if ((m = h.match(/^join\/([\w-]+)$/))) return showJoin(m[1]);
   else if ((m = h.match(/^edit\/([\w-]+)$/))) { const r = RECIPES.find(x => x.id === m[1]); if (r) return needLogin(() => showForm(r)); }
   else if (h === 'login') return showAuth();
   else if (h === 'me') { if (ME) return showAccount(); return showAuth(); }
@@ -379,21 +444,21 @@ sheet.addEventListener('click', (e) => {
 });
 async function shareRecipe(r) {
   const url = location.origin + '/#r/' + r.id;
-  const text = r.title + ' – מתוך ספר המתכונים של המשפחה';
+  const text = r.title + ' – מתוך ' + (BOOK ? BOOK.name : 'ספר המתכונים');
   if (navigator.share) { try { await navigator.share({ title: r.title, text, url }); } catch (e) {} return; }
   open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank', 'noopener');
 }
 
 // ---------- התחברות ----------
 let afterLogin = null;
-function needLogin(fn) { if (ME) return fn(); afterLogin = fn; showAuth(true); }
+function needLogin(fn, why) { if (ME) return fn(); afterLogin = fn; showAuth(why || true); }
 function showAuth(why, mode) {
   mode = mode || 'login';
   openSheet(`
     <div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>
     <div class="in" style="padding-top:4px">
       <h1 class="ftitle">${mode === 'login' ? 'התחברות' : 'הרשמה'}</h1>
-      ${why ? '<p class="hint" style="margin-top:-8px">כדי להוסיף ולערוך מתכונים צריך להתחבר. לקרוא אפשר גם בלי.</p>' : ''}
+      ${why ? `<p class="hint" style="margin-top:-8px">${typeof why === 'string' ? esc(why) : 'כדי להוסיף ולערוך מתכונים צריך להתחבר. לקרוא אפשר גם בלי.'}</p>` : ''}
       <div class="tabs"><button data-m="login" class="${mode === 'login' ? 'on' : ''}">יש לי משתמש</button><button data-m="signup" class="${mode === 'signup' ? 'on' : ''}">משתמש חדש</button></div>
       <form id="af" novalidate>
         ${mode === 'signup' ? '<label class="f"><span>שם</span><input class="inp" name="name" autocomplete="given-name" maxlength="24" required></label>' : ''}
@@ -413,7 +478,7 @@ function showAuth(why, mode) {
     try {
       const d = await api(mode === 'login' ? '/api/login' : '/api/signup', Object.fromEntries(f));
       setToken(d.token);
-      const r = await api('/api/recipes'); RECIPES = r.recipes; ME = r.me; paintAcct(); paintGrid();
+      setCur(''); await load(); // אחרי כניסה נפתח הספר שלכם
       toast(mode === 'login' ? `שלום ${ME.name}` : `ברוכים הבאים, ${ME.name}`);
       const fn = afterLogin; afterLogin = null;
       if (fn) fn(); else closeSheet();
@@ -440,7 +505,7 @@ function showAccount() {
       ${ME.admin ? `<h2 class="sec">${ic('people')}בני המשפחה באתר</h2><div id="users"><div class="spin"></div></div>` : ''}
     </div>`);
   sheet.querySelector('[data-x]').onclick = closeSheet;
-  $('#logout').onclick = async () => { try { await api('/api/logout', {}); } catch (e) {} setToken(''); ME = null; paintAcct(); load(); closeSheet(); toast('התנתקת'); };
+  $('#logout').onclick = async () => { try { await api('/api/logout', {}); } catch (e) {} setToken(''); setCur(''); ME = null; paintAcct(); load().catch(() => {}); toMain(); toast('התנתקת'); };
   $('#pf').onsubmit = async (e) => {
     e.preventDefault(); $('#perr').textContent = '';
     try { await api('/api/password', Object.fromEntries(new FormData(e.target))); e.target.reset(); toast('הסיסמה עודכנה'); }
@@ -451,7 +516,7 @@ function showAccount() {
 async function loadUsers() {
   try {
     const d = await api('/api/admin/users');
-    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול' };
+    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול', 'book-denied': 'ניסיון לגשת לספר בלי הרשאה' };
     $('#users').innerHTML = d.users.map(u => `<div class="urow"><div>${esc(u.name)}<small dir="ltr" style="text-align:right">${esc(u.email)}</small></div>
       ${u.id === ME.id ? '' : `<button class="btn" data-reset="${u.id}" data-name="${esc(u.name)}">איפוס סיסמה</button>`}</div>`).join('') +
       (d.alerts.length ? `<h2 class="sec">התראות</h2>` + d.alerts.map(a => `<div class="urow"><div>${esc(KIND[a.kind] || a.kind)}<small dir="ltr" style="text-align:right">${esc(a.who)} · ${new Date(a.t).toLocaleString('he-IL')}</small></div></div>`).join('') : '');
@@ -461,6 +526,139 @@ async function loadUsers() {
       catch (err) { toast(err.message); }
     });
   } catch (e) { $('#users').textContent = e.message; }
+}
+
+// ---------- הספרים שלי ----------
+const closeBar = () => `<div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>`;
+function bookRow(b, viewing) {
+  const who = b.mine ? 'שלי' : (b.owner ? 'של ' + esc(b.owner) : 'משותף');
+  return `<button class="brow${BOOK && b.id === BOOK.id ? ' on' : ''}" data-b="${esc(b.id)}">
+    <span class="bico">${ic(b.private ? 'lock' : 'book')}</span>
+    <span class="bt"><b>${esc(b.name)}</b><small>${b.count} מתכונים · ${who}${b.private ? ' · פרטי' : ''}${viewing ? ' · אתם צופים בו' : ''}</small></span>
+    ${BOOK && b.id === BOOK.id ? '<span class="cur">פתוח</span>' : ''}</button>`;
+}
+// inline=true: אין ספר פתוח, ורשימת הספרים היא המסך הראשי
+function booksHtml(inline) {
+  const viewing = BOOK && !BOOKS.some(b => b.id === BOOK.id) && !BOOK.locked ? bookRow(BOOK, true) : '';
+  return `<h1 class="ftitle"${inline ? ' style="font-size:24px;margin-top:4px"' : ''}>${inline ? (ME ? 'עוד אין לכם ספרים' : 'ברוכים הבאים לספר המתכונים') : 'הספרים שלי'}</h1>
+      ${ME ? '' : `${viewing}<p class="hint" style="margin-top:6px">כאן שומרים מתכונים בספרים משותפים עם המשפחה והחברים. כדי לפתוח ספר או להצטרף לספר שהזמינו אתכם אליו, צריך להתחבר.</p><button class="btn main wide" id="blog">התחברות או הרשמה</button>`}
+      ${ME ? `<div id="blist">${BOOKS.map(b => bookRow(b)).join('')}${viewing}</div>
+      ${inline ? '<p class="hint" style="margin-top:0">פתחו ספר חדש, או בקשו ממישהו לשלוח לכם הזמנה לספר שלו.</p>' : ''}
+      <h2 class="sec">ספר חדש</h2>
+      <form class="nb" id="nb" novalidate><input class="inp" name="name" maxlength="40" placeholder="למשל: מתכונים של סבתא"><button class="btn main" type="submit">יצירה</button></form>
+      <div class="err" id="nberr"></div>
+      <p class="hint" style="margin-top:4px">ספר חדש נפתח ריק. אחרי שיוצרים אותו אפשר להזמין אליו אנשים בוואטסאפ.</p>` : ''}`;
+}
+function showBooks() {
+  openSheet(`${closeBar()}<div class="in" style="padding-top:4px">${booksHtml(false)}</div>`);
+  sheet.querySelector('[data-x]').onclick = closeSheet;
+  bindBooks(sheet);
+}
+function bindBooks(root) {
+  root.querySelectorAll('[data-b]').forEach(b => b.onclick = () => switchBook(b.dataset.b));
+  const bl = root.querySelector('#blog'); if (bl) bl.onclick = () => needLogin(() => toMain());
+  const nb = root.querySelector('#nb');
+  if (nb) nb.onsubmit = async (e) => {
+    e.preventDefault(); root.querySelector('#nberr').textContent = '';
+    const name = String(new FormData(e.target).get('name') || '').trim();
+    if (name.length < 2) return root.querySelector('#nberr').textContent = 'צריך לתת לספר שם';
+    const btn = e.target.querySelector('button'); btn.disabled = true;
+    try { const d = await api('/api/books', { name }); apply(d); toMain(); toast('הספר נוצר. אפשר להזמין אליו אנשים מהכפתור למעלה'); }
+    catch (err) { root.querySelector('#nberr').textContent = err.message; btn.disabled = false; }
+  };
+}
+
+// ---------- הגדרות ספר והזמנה ----------
+const inviteUrl = () => location.origin + '/#join/' + BOOK.invite;
+async function sendInvite() {
+  const text = `הזמנה לספר המתכונים "${BOOK.name}". נכנסים לקישור, נרשמים, ואפשר לראות ולהוסיף מתכונים:`;
+  if (navigator.share) { try { await navigator.share({ title: BOOK.name, text, url: inviteUrl() }); } catch (e) {} return; }
+  open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + inviteUrl()), '_blank', 'noopener');
+}
+function showBookSettings() {
+  const b = BOOK;
+  openSheet(`${closeBar()}
+    <div class="in" style="padding-top:4px">
+      <h1 class="ftitle" style="margin-bottom:6px">${esc(b.name)}</h1>
+      <p class="hint" style="margin:0 0 18px">${b.count} מתכונים${b.owner ? ' · נפתח על ידי ' + esc(b.mine ? 'אותך' : b.owner) : ''}</p>
+      ${b.member ? `<h2 class="sec" style="margin-top:6px">הזמנה לספר</h2>
+        <p class="hint" style="margin:0 0 10px">מי שנכנס לקישור ונרשם יכול לראות את הספר ולהוסיף ולערוך בו מתכונים.</p>
+        <div class="acts" style="margin-top:0"><button class="btn main" id="inv">${ic('share')}שליחת הזמנה בוואטסאפ</button><button class="btn" id="cpy">${ic('copy')}העתקת הקישור</button></div>
+        ${b.mine ? '<button class="btn" id="newinv" style="margin-top:4px;font-size:14px;height:40px">קישור חדש (הקישור הישן יפסיק לעבוד)</button>' : ''}` : ''}
+      ${b.mine ? `<h2 class="sec">מי יכול לראות</h2>
+        <div class="seg" id="priv">
+          <button data-p="0" class="${b.private ? '' : 'on'}">${ic('globe')}<span>ציבורי<small>כל מי שיש לו קישור יכול לקרוא. להוסיף ולערוך רק מי שהוזמן</small></span></button>
+          <button data-p="1" class="${b.private ? 'on' : ''}">${ic('lock')}<span>פרטי<small>רק מי שהוזמן לספר יכול לראות אותו</small></span></button>
+        </div>
+        <h2 class="sec">שם הספר</h2>
+        <form class="nb" id="ren" novalidate><input class="inp" name="name" maxlength="40" value="${esc(b.name)}"><button class="btn dark" type="submit">שמירה</button></form>
+        <div class="err" id="renerr"></div>` : ''}
+      ${b.member ? `<h2 class="sec">${ic('people')}חברים בספר</h2><div id="mem"><div class="spin"></div></div>` : ''}
+      ${b.member && !b.mine ? '<button class="btn wide" id="leave" style="margin-top:22px;color:#b3261e">יציאה מהספר</button>' : ''}
+      ${b.mine && !b.family ? `<button class="btn wide" id="bdel" style="margin-top:22px;color:#b3261e">${ic('trash')}מחיקת הספר</button>` : ''}
+    </div>`);
+  sheet.querySelector('[data-x]').onclick = closeSheet;
+  const on = (id, fn) => { const el = $('#' + id); if (el) el.onclick = fn; };
+  on('inv', sendInvite);
+  on('cpy', async () => { try { await navigator.clipboard.writeText(inviteUrl()); toast('הקישור הועתק'); } catch (e) { prompt('העתיקו את הקישור:', inviteUrl()); } });
+  on('newinv', async () => {
+    if (!confirm('ליצור קישור הזמנה חדש? מי שקיבל את הקישור הישן לא יוכל להצטרף דרכו. מי שכבר בספר נשאר.')) return;
+    try { apply(await api(`/api/books/${b.id}/invite`, {})); toast('נוצר קישור חדש'); } catch (e) { toast(e.message); }
+  });
+  sheet.querySelectorAll('[data-p]').forEach(x => x.onclick = async () => {
+    try { apply(await api(`/api/books/${b.id}`, { private: x.dataset.p === '1' })); showBookSettings(); toast(BOOK.private ? 'הספר פרטי עכשיו' : 'הספר ציבורי עכשיו'); }
+    catch (e) { toast(e.message); }
+  });
+  const ren = $('#ren');
+  if (ren) ren.onsubmit = async (e) => {
+    e.preventDefault(); $('#renerr').textContent = '';
+    try { apply(await api(`/api/books/${b.id}`, { name: new FormData(e.target).get('name') })); showBookSettings(); toast('השם נשמר'); }
+    catch (err) { $('#renerr').textContent = err.message; }
+  };
+  on('leave', async () => {
+    if (!confirm(`לצאת מהספר "${b.name}"? כדי לחזור תצטרכו הזמנה חדשה.`)) return;
+    try { await api(`/api/books/${b.id}/leave`, {}); await switchBook(''); toast('יצאתם מהספר'); } catch (e) { toast(e.message); }
+  });
+  on('bdel', async () => {
+    if (!confirm(`למחוק את הספר "${b.name}" עם כל ${b.count} המתכונים שבו? אי אפשר לבטל את זה.`)) return;
+    try { await api(`/api/books/${b.id}/delete`, {}); await switchBook(''); toast('הספר נמחק'); } catch (e) { toast(e.message); }
+  });
+  if (b.member) loadMembers(b);
+}
+async function loadMembers(b) {
+  try {
+    const d = await api(`/api/books/${b.id}/members`);
+    $('#mem').innerHTML = d.members.map(u => `<div class="urow"><div class="who"><span class="dot" style="background:${esc(u.color)}">${esc((u.name || '?').charAt(0))}</span>
+      <div>${esc(u.name)}${ME && u.id === ME.id ? ' (אני)' : ''}<small>${u.owner ? 'פתח את הספר' : 'חבר בספר'}</small></div></div>
+      ${b.mine && !u.owner ? `<button class="btn" data-rm="${u.id}" data-name="${esc(u.name)}" style="height:38px">הוצאה</button>` : ''}</div>`).join('');
+    $('#mem').querySelectorAll('[data-rm]').forEach(x => x.onclick = async () => {
+      if (!confirm(`להוציא את ${x.dataset.name} מהספר?`)) return;
+      try { await api(`/api/books/${b.id}/remove`, { user: +x.dataset.rm }); x.closest('.urow').remove(); toast('הוצא מהספר'); } catch (e) { toast(e.message); }
+    });
+  } catch (e) { $('#mem').textContent = e.message; }
+}
+
+// ---------- הצטרפות מקישור הזמנה ----------
+async function showJoin(token) {
+  openSheet(`${closeBar()}<div class="in"><div class="loading"><div class="spin"></div></div></div>`);
+  sheet.querySelector('[data-x]').onclick = toMain;
+  let d;
+  try { d = await api('/api/invite/' + encodeURIComponent(token)); }
+  catch (e) {
+    sheet.querySelector('.in').innerHTML = `<div class="empty"><b>ההזמנה לא עובדת</b>${esc(e.message)}</div>`;
+    return;
+  }
+  sheet.querySelector('.in').innerHTML = `<div style="text-align:center;padding-top:30px">
+      <div class="bico" style="width:72px;height:72px;margin:0 auto 14px;border-radius:20px;display:grid;place-items:center;background:#f3e2d3;color:var(--terra)">${ic('book')}</div>
+      <p class="hint" style="margin:0">${d.book.owner ? esc(d.book.owner) + ' מזמין/ה אתכם לספר' : 'הוזמנתם לספר'}</p>
+      <h1 class="ftitle" style="margin:6px 0 22px">${esc(d.book.name)}</h1>
+      <button class="btn main wide" id="join">${d.member ? 'פתיחת הספר' : 'הצטרפות לספר'}</button>
+      ${ME ? '' : '<p class="hint" style="margin-top:12px">כדי להצטרף צריך להתחבר או להירשם. זה לוקח חצי דקה.</p>'}
+    </div>`;
+  $('#join').onclick = () => needLogin(async () => {
+    try { const r = await api('/api/join', { token }); await switchBook(r.book); toast('הצטרפתם לספר ' + d.book.name); }
+    catch (e) { toast(e.message); toMain(); }
+  }, `כדי להצטרף לספר "${d.book.name}" צריך להתחבר. אין לכם משתמש? בחרו "משתמש חדש".`);
 }
 
 // ---------- הוספה ועריכה ----------
@@ -489,7 +687,7 @@ function showForm(r) {
         <label class="f"><span>ממי המתכון <em>(לא חובה)</em></span><input class="inp" name="source" maxlength="80" value="${esc(r ? r.source : '')}" placeholder="למשל: סבתא רחל"></label>
         <label class="f"><span>הערה <em>(לא חובה)</em></span><input class="inp" name="note" maxlength="600" value="${esc(r ? r.note : '')}" placeholder="טיפ, שינוי שעשיתם..."></label>
         <div class="err" id="ferr"></div>
-        <button class="btn main wide" type="submit">${r ? 'שמירת שינויים' : 'הוספה לספר'}</button>
+        <button class="btn main wide" type="submit">${r ? 'שמירת שינויים' : 'הוספה ל' + esc(BOOK.name)}</button>
         ${r && r.del ? `<button type="button" class="btn wide" id="del" style="margin-top:10px;color:#b3261e">${ic('trash')}מחיקת המתכון</button>` : ''}
       </form>
     </div>`);
@@ -510,7 +708,7 @@ function showForm(r) {
   const del = $('#del');
   if (del) del.onclick = async () => {
     if (!confirm('למחוק את המתכון לגמרי?')) return;
-    try { const d = await api(`/api/recipes/${r.id}/delete`, {}); RECIPES = d.recipes; paintGrid(); depth = 0; history.replaceState(null, '', location.pathname); route(); toast('המתכון נמחק'); }
+    try { const d = await api(`/api/recipes/${r.id}/delete`, {}); apply(d); toMain(); toast('המתכון נמחק'); }
     catch (err) { $('#ferr').textContent = err.message; }
   };
   $('#rf').onsubmit = async (e) => {
@@ -522,10 +720,10 @@ function showForm(r) {
     if (!chosen) return $('#ferr').textContent = 'בחרו סוג מנה';
     btn.disabled = true;
     try {
-      const body = { ...f, cat: chosen, ing: f.ing.split('\n'), steps: f.steps.split('\n') };
+      const body = { ...f, cat: chosen, ing: f.ing.split('\n'), steps: f.steps.split('\n'), book: BOOK.id };
       if (photoData !== undefined) body.photo = photoData;
       const d = await api(r ? `/api/recipes/${r.id}` : '/api/recipes', body);
-      RECIPES = d.recipes; paintGrid();
+      apply(d);
       // מחליפים את הטופס במתכון עצמו
       history.replaceState(null, '', '#r/' + d.id); route();
       toast(r ? 'נשמר' : 'המתכון נוסף לספר');
@@ -558,9 +756,11 @@ $('#clr').onclick = () => { $('#q').value = ''; QUERY = ''; $('#sbox').classList
 $('#grid').addEventListener('click', (e) => { const c = e.target.closest('.card'); if (c) go('r/' + c.dataset.id); });
 $('#fab').onclick = () => go('add');
 $('#acct').onclick = () => go(ME ? 'me' : 'login');
+$('#brand').onclick = () => go('books');
+$('#bset').onclick = () => go('book');
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet(); });
 
-paintChips(); paintAcct(); load();
+paintChips(); paintAcct(); start();
 </script>
 </body>
 </html>

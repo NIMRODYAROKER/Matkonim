@@ -55,6 +55,9 @@ const CATS = ['chicken', 'meat', 'fish', 'soup', 'salad', 'side', 'bake'];
 const COLORS = ['#c4633f', '#6f8a4a', '#d49a3a', '#8a5a7a', '#4f7f8a', '#b5523b', '#7a6a4a'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PASS_ABC = 'abcdefghjkmnpqrstuvwxyz23456789';
+const FAMILY = 'family'; // הספר של קבוצת הוואטסאפ: ספר פרטי של נמרוד
+const FAMILY_OWNER = 'nimrodyaroker@gmail.com';
+const MAX_BOOKS = 20, MAX_MEMBERS = 200;
 
 class Limiter {
   constructor() { this.hits = new Map(); }
@@ -129,7 +132,21 @@ export class RecipesDB extends DurableObject {
       );
       CREATE TABLE IF NOT EXISTS seed_removed (id TEXT PRIMARY KEY);
       CREATE TABLE IF NOT EXISTS security_log (t INTEGER NOT NULL, kind TEXT NOT NULL, who TEXT, ip TEXT);
+      CREATE TABLE IF NOT EXISTS books (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, owner INTEGER,
+        private INTEGER NOT NULL DEFAULT 0, invite TEXT NOT NULL UNIQUE, created INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS members (book_id TEXT NOT NULL, user_id INTEGER NOT NULL, joined INTEGER NOT NULL, PRIMARY KEY (book_id, user_id));
     `);
+    // ספרים: כל מתכון שייך לספר. מה שהיה עד עכשיו נכנס לספר של המשפחה
+    try { this.sql.exec("ALTER TABLE recipes ADD COLUMN book_id TEXT NOT NULL DEFAULT 'family'"); } catch (e) { /* העמודה כבר קיימת */ }
+    this.sql.exec('CREATE INDEX IF NOT EXISTS recipes_book ON recipes (book_id, sort)');
+    this.sql.exec('CREATE INDEX IF NOT EXISTS members_user ON members (user_id)');
+    if (!this.one('SELECT 1 AS x FROM books WHERE id = ?', FAMILY)) {
+      this.sql.exec('INSERT INTO books (id, name, owner, private, invite, created) VALUES (?, ?, NULL, 1, ?, ?)',
+        FAMILY, 'ספר המתכונים של המשפחה', randomId(12), Date.now());
+    }
+    this.claimFamily();
     this.sql.exec('DELETE FROM sessions WHERE created < ?', Date.now() - SESSION_DAYS * 864e5);
     // מתכונים מקבוצת הוואטסאפ: נכנסים פעם אחת. מתכון שנערך נשאר ערוך, מתכון שנמחק לא חוזר
     const now = Date.now();
@@ -140,8 +157,8 @@ export class RecipesDB extends DurableObject {
       if (ex) { if (ex.by_user === null && ex.edited_by === null && ex.cat !== r.cat) this.sql.exec('UPDATE recipes SET cat = ? WHERE id = ?', r.cat, r.id); continue; }
       if (this.one('SELECT 1 AS x FROM seed_removed WHERE id = ?', r.id)) continue;
       const sort = r.date ? Date.parse(r.date + 'T12:00:00Z') : now - 400 * 864e5;
-      this.sql.exec(`INSERT INTO recipes (id, cat, title, source, url, img, servings, note, ing, steps, video, by_user, sort, created, updated)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
+      this.sql.exec(`INSERT INTO recipes (id, book_id, cat, title, source, url, img, servings, note, ing, steps, video, by_user, sort, created, updated)
+        VALUES (?, '${FAMILY}', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
         r.id, r.cat, r.title, r.source || '', r.url || '', r.img || '', r.servings || '', r.note || '',
         JSON.stringify(r.ing || []), JSON.stringify(r.steps || []), r.video ? 1 : 0, sort, now, now);
     }
@@ -175,21 +192,78 @@ export class RecipesDB extends DurableObject {
     this.sql.exec('INSERT INTO sessions (token, user_id, created) VALUES (?, ?, ?)', token, userId, Date.now());
     return token;
   }
-  canEdit(me, r) { return !!me && (!!me.admin || r.by_user === null || r.by_user === me.id); }
-  canDelete(me, r) { return !!me && (!!me.admin || (r.by_user !== null && r.by_user === me.id)); }
-  pub(r, me, names) {
+  // ----- ספרים -----
+  // הספר של קבוצת הוואטסאפ שייך למשתמש של נמרוד (גם אם הוא נרשם רק אחרי שהספר נוצר)
+  claimFamily() {
+    const u = this.one('SELECT id FROM users WHERE email = ?', FAMILY_OWNER);
+    if (!u) return;
+    this.sql.exec('UPDATE books SET owner = ? WHERE id = ? AND owner IS NULL', u.id, FAMILY);
+    if (this.one('SELECT owner FROM books WHERE id = ?', FAMILY).owner === u.id)
+      this.sql.exec('INSERT OR IGNORE INTO members (book_id, user_id, joined) VALUES (?, ?, ?)', FAMILY, u.id, Date.now());
+  }
+  newBook(name, ownerId) {
+    const id = 'b' + randomId(6), now = Date.now();
+    this.sql.exec('INSERT INTO books (id, name, owner, private, invite, created) VALUES (?, ?, ?, 0, ?, ?)', id, name, ownerId, randomId(12), now);
+    this.sql.exec('INSERT OR IGNORE INTO members (book_id, user_id, joined) VALUES (?, ?, ?)', id, ownerId, now);
+    return id;
+  }
+  book(id) { return this.one('SELECT * FROM books WHERE id = ?', String(id || '')); }
+  isMember(me, b) { return !!me && !!b && !!this.one('SELECT 1 AS x FROM members WHERE book_id = ? AND user_id = ?', b.id, me.id); }
+  canView(me, b) { return !b.private || this.isMember(me, b); }
+  defaultBook(me) {
+    // ספר ראשון של המשתמש. אין לו ספרים (או לא מחובר)? אין ספר פתוח והאתר מראה את רשימת הספרים
+    if (!me) return null;
+    return this.one('SELECT b.* FROM members m JOIN books b ON b.id = m.book_id WHERE m.user_id = ? ORDER BY m.joined LIMIT 1', me.id);
+  }
+  ownerName(b) { const u = b.owner ? this.one('SELECT name FROM users WHERE id = ?', b.owner) : null; return u ? u.name : ''; }
+  bookPub(b, me, member) {
+    const view = member || !b.private;
+    return {
+      id: b.id, name: b.name, private: !!b.private, family: b.id === FAMILY,
+      mine: !!me && b.owner === me.id, member, locked: !view, owner: this.ownerName(b),
+      count: this.one('SELECT COUNT(*) AS c FROM recipes WHERE book_id = ?', b.id).c,
+      invite: member ? b.invite : undefined
+    };
+  }
+  myBooks(me) {
+    return this.q(`SELECT b.*, (SELECT COUNT(*) FROM recipes r WHERE r.book_id = b.id) AS c, (SELECT name FROM users u WHERE u.id = b.owner) AS oname
+      FROM members m JOIN books b ON b.id = m.book_id WHERE m.user_id = ? ORDER BY m.joined`, me.id)
+      .map(b => ({ id: b.id, name: b.name, private: !!b.private, mine: b.owner === me.id, owner: b.oname || '', count: b.c }));
+  }
+  view(me, b, extra) {
+    if (!b) return { me: me ? this.meUser(me) : null, book: null, recipes: [], books: me ? this.myBooks(me) : [], ...(extra || {}) };
+    const member = this.isMember(me, b);
+    const pb = this.bookPub(b, me, member);
+    return { me: me ? this.meUser(me) : null, book: pb, recipes: pb.locked ? [] : this.all(me, b, member), books: me ? this.myBooks(me) : [], ...(extra || {}) };
+  }
+  ownBook(me, id, ip) {
+    const b = this.book(id);
+    if (!b) throw new HttpError(404, 'הספר לא נמצא');
+    if (b.owner !== me.id) { this.secLog('book-denied', me.email, ip); throw new HttpError(403, 'רק מי שפתח את הספר יכול לעשות את זה'); }
+    return b;
+  }
+  memberBook(me, id, ip) {
+    const b = this.book(id);
+    if (!b) throw new HttpError(404, 'הספר לא נמצא');
+    if (!this.isMember(me, b)) { this.secLog('book-denied', me.email, ip); throw new HttpError(403, 'רק מי שהוזמן לספר יכול לעשות את זה'); }
+    return b;
+  }
+
+  canEdit(me, r, member) { return !!me && member; }
+  canDelete(me, r, b, member) { return !!me && member && (b.owner === me.id || (r.by_user !== null && r.by_user === me.id)); }
+  pub(r, me, names, b, member) {
     return {
       id: r.id, cat: r.cat, title: r.title, source: r.source, url: r.url,
       img: r.photo_v ? `/api/photo/${r.id}?v=${r.photo_v}` : r.img,
       servings: r.servings, note: r.note, ing: JSON.parse(r.ing), steps: JSON.parse(r.steps),
       video: !!r.video, by: r.by_user ? (names.get(r.by_user) || '') : '', sort: r.sort,
-      edit: this.canEdit(me, r), del: this.canDelete(me, r)
+      edit: this.canEdit(me, r, member), del: this.canDelete(me, r, b, member)
     };
   }
-  all(me) {
+  all(me, b, member) {
     const names = new Map(this.q('SELECT id, name FROM users').map(u => [u.id, u.name]));
-    return this.q('SELECT id, cat, title, source, url, img, photo_v, servings, note, ing, steps, video, by_user, sort FROM recipes ORDER BY sort DESC')
-      .map(r => this.pub(r, me, names));
+    return this.q('SELECT id, cat, title, source, url, img, photo_v, servings, note, ing, steps, video, by_user, sort FROM recipes WHERE book_id = ? ORDER BY sort DESC', b.id)
+      .map(r => this.pub(r, me, names, b, member));
   }
   readRecipe(body, existing) {
     const title = norm(body.title, 80);
@@ -235,7 +309,22 @@ export class RecipesDB extends DurableObject {
     // ----- ציבורי: צפייה במתכונים -----
     if (path === '/api/recipes' && method === 'GET') {
       const me = this.auth(request, true);
-      return json({ me: me ? this.meUser(me) : null, recipes: this.all(me) });
+      const rid = url.searchParams.get('recipe'), bid = url.searchParams.get('book');
+      let b = null;
+      if (rid) { const r = this.one('SELECT book_id FROM recipes WHERE id = ?', rid); if (r) b = this.book(r.book_id); }
+      else if (bid) b = this.book(bid);
+      let denied = false;
+      if (b && !this.canView(me, b)) { b = null; denied = true; }
+      if (!b) b = this.defaultBook(me);
+      return json(this.view(me, b, { denied }));
+    }
+    if ((m = path.match(/^\/api\/invite\/([\w-]+)$/)) && method === 'GET') {
+      if (L.over('inv:' + ip, 30, 600e3)) throw new HttpError(429, 'יותר מדי ניסיונות. חכו כמה דקות');
+      L.add('inv:' + ip, 600e3);
+      const b = this.one('SELECT * FROM books WHERE invite = ?', m[1]);
+      if (!b) throw new HttpError(404, 'קישור ההזמנה לא תקף. בקשו קישור חדש');
+      const me = this.auth(request, true);
+      return json({ book: { id: b.id, name: b.name, owner: this.ownerName(b) }, member: this.isMember(me, b) });
     }
     if ((m = path.match(/^\/api\/photo\/([\w-]+)$/)) && method === 'GET') {
       const r = this.one('SELECT photo FROM recipes WHERE id = ?', m[1]);
@@ -259,6 +348,7 @@ export class RecipesDB extends DurableObject {
       this.sql.exec('INSERT INTO users (name, email, pass_hash, salt, color, admin, created) VALUES (?, ?, ?, ?, ?, ?, ?)',
         name, email, await hashPassword(password, salt), salt, COLORS[count % COLORS.length], count === 0 ? 1 : 0, Date.now());
       const u = this.one('SELECT * FROM users WHERE email = ?', email);
+      if (email === FAMILY_OWNER) this.claimFamily();
       L.add('signup:' + ip, 3600e3);
       return json({ token: this.newSession(u.id) });
     }
@@ -298,7 +388,7 @@ export class RecipesDB extends DurableObject {
       if (!me.admin) { this.secLog('admin-denied', me.email, ip); throw new HttpError(403, 'רק למנהל האתר'); }
       if (path === '/api/admin/users' && method === 'GET') {
         return json({ users: this.q('SELECT id, name, email, created FROM users ORDER BY created'),
-          alerts: this.q("SELECT t, kind, who FROM security_log WHERE kind IN ('login-locked','signup-limit','admin-denied') ORDER BY t DESC LIMIT 20") });
+          alerts: this.q("SELECT t, kind, who FROM security_log WHERE kind IN ('login-locked','signup-limit','admin-denied','book-denied') ORDER BY t DESC LIMIT 20") });
       }
       if ((m = path.match(/^\/api\/admin\/users\/(\d+)\/reset$/)) && method === 'POST') {
         const u = this.one('SELECT * FROM users WHERE id = ?', +m[1]);
@@ -313,34 +403,92 @@ export class RecipesDB extends DurableObject {
       }
     }
 
+    // ----- ספרים -----
+    if (path === '/api/books' && method === 'POST') {
+      const name = norm(body.name, 40);
+      if (name.length < 2) bad('צריך לתת לספר שם');
+      if (this.one('SELECT COUNT(*) AS c FROM books WHERE owner = ?', me.id).c >= MAX_BOOKS) bad(`אפשר לפתוח עד ${MAX_BOOKS} ספרים`);
+      const id = this.newBook(name, me.id);
+      return json(this.view(me, this.book(id)));
+    }
+    if (path === '/api/join' && method === 'POST') {
+      if (L.over('inv:' + ip, 30, 600e3)) throw new HttpError(429, 'יותר מדי ניסיונות. חכו כמה דקות');
+      L.add('inv:' + ip, 600e3);
+      const b = this.one('SELECT * FROM books WHERE invite = ?', String(body.token || '').slice(0, 40));
+      if (!b) bad('קישור ההזמנה לא תקף. בקשו קישור חדש');
+      if (!this.isMember(me, b)) {
+        if (this.one('SELECT COUNT(*) AS c FROM members WHERE book_id = ?', b.id).c >= MAX_MEMBERS) bad('הספר מלא');
+        this.sql.exec('INSERT INTO members (book_id, user_id, joined) VALUES (?, ?, ?)', b.id, me.id, Date.now());
+      }
+      return json({ book: b.id });
+    }
+    if ((m = path.match(/^\/api\/books\/([\w-]+)\/members$/)) && method === 'GET') {
+      const b = this.memberBook(me, m[1], ip);
+      return json({ members: this.q('SELECT u.id, u.name, u.color FROM members m JOIN users u ON u.id = m.user_id WHERE m.book_id = ? ORDER BY m.joined', b.id)
+        .map(u => ({ ...u, owner: u.id === b.owner })) });
+    }
+    if ((m = path.match(/^\/api\/books\/([\w-]+)(?:\/(invite|remove|leave|delete))?$/)) && method === 'POST') {
+      const act = m[2] || 'update';
+      if (act === 'leave') {
+        const b = this.memberBook(me, m[1], ip);
+        if (b.owner === me.id) bad('אי אפשר לצאת מספר שפתחתם');
+        this.sql.exec('DELETE FROM members WHERE book_id = ? AND user_id = ?', b.id, me.id);
+        return json({ ok: true });
+      }
+      const b = this.ownBook(me, m[1], ip);
+      if (act === 'update') {
+        if (body.name !== undefined) {
+          const name = norm(body.name, 40);
+          if (name.length < 2) bad('צריך לתת לספר שם');
+          this.sql.exec('UPDATE books SET name = ? WHERE id = ?', name, b.id);
+        }
+        if (body.private !== undefined) this.sql.exec('UPDATE books SET private = ? WHERE id = ?', body.private ? 1 : 0, b.id);
+      } else if (act === 'invite') {
+        this.sql.exec('UPDATE books SET invite = ? WHERE id = ?', randomId(12), b.id);
+      } else if (act === 'remove') {
+        const uid = +body.user;
+        if (!uid || uid === me.id) bad('אי אפשר להוציא את עצמכם');
+        this.sql.exec('DELETE FROM members WHERE book_id = ? AND user_id = ?', b.id, uid);
+        return json({ ok: true });
+      } else if (act === 'delete') {
+        if (b.id === FAMILY) bad('את הספר של המשפחה אי אפשר למחוק');
+        this.sql.exec('DELETE FROM recipes WHERE book_id = ?', b.id);
+        this.sql.exec('DELETE FROM members WHERE book_id = ?', b.id);
+        this.sql.exec('DELETE FROM books WHERE id = ?', b.id);
+        return json({ ok: true });
+      }
+      return json(this.view(me, this.book(b.id)));
+    }
+
     // ----- מתכונים -----
     if (path === '/api/recipes' && method === 'POST') {
       if (L.over('add:' + me.id, 40, 3600e3)) throw new HttpError(429, 'הוספתם הרבה מתכונים בשעה האחרונה. נסו שוב מאוחר יותר');
-      if (this.one('SELECT COUNT(*) AS c FROM recipes').c >= 5000) bad('ספר המתכונים מלא');
+      if (this.one('SELECT COUNT(*) AS c FROM recipes').c >= 20000) bad('אין מקום למתכונים נוספים');
+      const b = this.memberBook(me, body.book, ip);
       const r = this.readRecipe(body);
       const id = 'u' + randomId(8), now = Date.now();
-      this.sql.exec(`INSERT INTO recipes (id, cat, title, source, url, servings, note, ing, steps, video, by_user, edited_by, sort, created, updated)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        id, r.cat, r.title, r.source, r.url, r.servings, r.note, JSON.stringify(r.ing), JSON.stringify(r.steps), r.video, me.id, me.id, now, now, now);
+      this.sql.exec(`INSERT INTO recipes (id, book_id, cat, title, source, url, servings, note, ing, steps, video, by_user, edited_by, sort, created, updated)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, b.id, r.cat, r.title, r.source, r.url, r.servings, r.note, JSON.stringify(r.ing), JSON.stringify(r.steps), r.video, me.id, me.id, now, now, now);
       this.savePhoto(id, body.photo);
       L.add('add:' + me.id, 3600e3);
-      return json({ id, recipes: this.all(me) });
+      return json({ id, ...this.view(me, b) });
     }
     if ((m = path.match(/^\/api\/recipes\/([\w-]+)(?:\/(delete))?$/)) && method === 'POST') {
       const ex = this.one('SELECT * FROM recipes WHERE id = ?', m[1]);
       if (!ex) throw new HttpError(404, 'המתכון לא נמצא');
+      const b = this.memberBook(me, ex.book_id, ip);
       if (m[2] === 'delete') {
-        if (!this.canDelete(me, ex)) throw new HttpError(403, 'אפשר למחוק רק מתכון שהוספתם');
+        if (!this.canDelete(me, ex, b, true)) throw new HttpError(403, 'אפשר למחוק רק מתכון שהוספתם');
         this.sql.exec('DELETE FROM recipes WHERE id = ?', ex.id);
         if (ex.by_user === null) this.sql.exec('INSERT OR IGNORE INTO seed_removed (id) VALUES (?)', ex.id);
-        return json({ recipes: this.all(me) });
+        return json(this.view(me, b));
       }
-      if (!this.canEdit(me, ex)) throw new HttpError(403, 'אפשר לערוך רק מתכון שהוספתם');
       const r = this.readRecipe(body);
       this.sql.exec(`UPDATE recipes SET cat = ?, title = ?, source = ?, url = ?, servings = ?, note = ?, ing = ?, steps = ?, video = ?, edited_by = ?, updated = ? WHERE id = ?`,
         r.cat, r.title, r.source, r.url, r.servings, r.note, JSON.stringify(r.ing), JSON.stringify(r.steps), r.video, me.id, Date.now(), ex.id);
       this.savePhoto(ex.id, body.photo);
-      return json({ id: ex.id, recipes: this.all(me) });
+      return json({ id: ex.id, ...this.view(me, b) });
     }
     throw new HttpError(404, 'לא נמצא');
   }
