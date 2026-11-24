@@ -190,6 +190,13 @@ button.brand{text-align:right;display:block}
 .newb{margin-top:18px;padding:16px;border-radius:20px;background:var(--card);box-shadow:var(--shadow)}
 .newb h2{font-family:var(--serif);font-size:20px;margin:0 0 4px}
 .nb{display:flex;gap:8px;margin-top:8px}
+.imp{background:#fbf6ee;border:1px solid #ead9c2;border-radius:16px;padding:14px;margin:0 0 18px}
+.imp b{display:flex;align-items:center;gap:6px;font-size:15.5px}
+.imp b .i{width:18px;height:18px}
+.imp>span{display:block;color:var(--soft);font-size:14px;margin-top:3px}
+.imsg{font-size:14px;margin-top:8px;min-height:0;color:var(--soft)}
+.imsg:empty{display:none}
+.imsg.ok{color:#4f6b32}.imsg.bad{color:#b3261e}
 .nb .inp{flex:1;min-width:0}
 .seg{display:flex;flex-direction:column;gap:8px}
 .seg button{display:flex;gap:10px;align-items:flex-start;text-align:right;padding:12px 14px;border-radius:14px;background:var(--card);border:2px solid var(--line);line-height:1.4}
@@ -368,7 +375,15 @@ async function load(q) {
   if (d.denied) toast('הספר הזה פרטי. אפשר לראות אותו רק בהזמנה');
   return d;
 }
+// קישור שנשלח לאתר דרך "שיתוף" בטלפון: פותחים מתכון חדש וממלאים אותו מהקישור
+let PENDING_LINK = '';
+function findLink(t) { const m = String(t || '').match(/https?:\/\/[^\s<>"']+/i); return m ? m[0].replace(/[),.!?׳״]+$/, '') : ''; }
 async function start() {
+  const sp = new URLSearchParams(location.search);
+  if (sp.has('url') || sp.has('text') || sp.has('add')) {
+    PENDING_LINK = findLink(sp.get('url')) || findLink(sp.get('text')) || findLink(sp.get('add')) || findLink(sp.get('title'));
+    history.replaceState(null, '', location.pathname + (PENDING_LINK ? '#add' : ''));
+  }
   const h = decodeURIComponent(location.hash.slice(1));
   let m, q = '';
   if ((m = h.match(/^r\/([\w-]+)$/))) q = 'recipe=' + m[1];
@@ -552,7 +567,7 @@ function showAccount() {
 async function loadUsers() {
   try {
     const d = await api('/api/admin/users');
-    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול', 'book-denied': 'ניסיון לגשת לספר בלי הרשאה', 'share-denied': 'ניסיון לשתף מתכון מספר פרטי בלי הרשאה' };
+    const KIND = { 'login-locked': 'נחסם אחרי הרבה ניסיונות כניסה', 'signup-limit': 'הרבה הרשמות ממכשיר אחד', 'admin-denied': 'ניסיון להיכנס לניהול', 'book-denied': 'ניסיון לגשת לספר בלי הרשאה', 'share-denied': 'ניסיון לשתף מתכון מספר פרטי בלי הרשאה', 'import-blocked': 'ניסיון לקרוא כתובת פנימית דרך הוספה מקישור' };
     $('#users').innerHTML = d.users.map(u => `<div class="urow"><div>${esc(u.name)}<small dir="ltr" style="text-align:right">${esc(u.email)}</small></div>
       ${u.id === ME.id ? '' : `<button class="btn" data-reset="${u.id}" data-name="${esc(u.name)}">איפוס סיסמה</button>`}</div>`).join('') +
       (d.alerts.length ? `<h2 class="sec">התראות</h2>` + d.alerts.map(a => `<div class="urow"><div>${esc(KIND[a.kind] || a.kind)}<small dir="ltr" style="text-align:right">${esc(a.who)} · ${new Date(a.t).toLocaleString('he-IL')}</small></div></div>`).join('') : '');
@@ -715,6 +730,12 @@ function showForm(r) {
     <div class="bar"><button class="round" data-x="close" aria-label="סגירה">${ic('close')}</button><span></span></div>
     <div class="in" style="padding-top:4px">
       <h1 class="ftitle">${r ? 'עריכת מתכון' : 'מתכון חדש'}</h1>
+      ${r ? '' : `<div class="imp">
+        <b>${ic('link')}יש קישור למתכון?</b>
+        <span>מדביקים אותו כאן, והשם, המצרכים, ההכנה והתמונה יתמלאו לבד</span>
+        <form class="nb" id="impf" novalidate><input class="inp" name="link" type="url" dir="ltr" placeholder="https://" value="${esc(PENDING_LINK)}"><button class="btn main" type="submit">מילוי</button></form>
+        <div class="imsg" id="imsg"></div>
+      </div>`}
       <form id="rf" novalidate>
         <label class="f"><span>שם המתכון</span><input class="inp" name="title" maxlength="80" value="${esc(r ? r.title : '')}" placeholder="למשל: עוגת השיש של סבתא"></label>
         <div class="f" style="margin-bottom:14px"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">סוג</span>
@@ -756,6 +777,35 @@ function showForm(r) {
     try { const d = await api(`/api/recipes/${r.id}/delete`, {}); apply(d); toMain(); toast('המתכון נמחק'); }
     catch (err) { $('#ferr').textContent = err.message; }
   };
+  const impf = $('#impf');
+  if (impf) {
+    impf.onsubmit = async (e) => {
+      e.preventDefault();
+      const link = findLink(impf.link.value);
+      const msg = $('#imsg'), btn = impf.querySelector('button');
+      if (!link) { msg.className = 'imsg bad'; msg.textContent = 'הקישור לא נראה תקין'; return; }
+      impf.link.value = link;
+      btn.disabled = true; msg.className = 'imsg'; msg.textContent = 'קוראים את המתכון מהקישור...';
+      try {
+        const d = await api('/api/import', { url: link });
+        const rf = $('#rf'), set = (n, v) => { if (v) rf[n].value = v; };
+        set('title', d.title); set('url', d.url); set('source', d.source); set('servings', d.servings); set('note', d.note);
+        if (d.ing.length) rf.ing.value = d.ing.join('\n');
+        if (d.steps.length) rf.steps.value = d.steps.join('\n');
+        if (d.cat && !chosen) sheet.querySelector(`[data-cat="${d.cat}"]`)?.click();
+        if (d.image) {
+          try { photoData = await shrinkSrc(d.image); const p = $('#prev'); p.style.backgroundImage = `url('${photoData}')`; p.innerHTML = ''; } catch (err) {}
+        }
+        if (d.found) { msg.className = 'imsg ok'; msg.textContent = 'המתכון מולא. כדאי לעבור עליו, לבחור סוג מנה ולשמור'; }
+        else if (d.error) { msg.className = 'imsg bad'; msg.textContent = d.error; }
+        else { msg.className = 'imsg'; msg.textContent = d.social
+          ? 'מהאתר הזה אפשר לקחת רק שם, תמונה ותיאור. את המצרכים וההכנה מוסיפים ידנית, או שומרים כקישור בלבד'
+          : 'בדף הזה אין מתכון מסודר, אז מילאנו רק שם ותמונה. את השאר מוסיפים ידנית'; }
+      } catch (err) { msg.className = 'imsg bad'; msg.textContent = err.message; }
+      btn.disabled = false;
+    };
+    if (PENDING_LINK) { PENDING_LINK = ''; impf.requestSubmit(); }
+  }
   $('#rf').onsubmit = async (e) => {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target));
@@ -775,14 +825,15 @@ function showForm(r) {
     } catch (err) { $('#ferr').textContent = err.message; btn.disabled = false; }
   };
 }
-function shrink(file) {
+function shrink(file) { return shrinkSrc(URL.createObjectURL(file), true); }
+function shrinkSrc(url, revoke) {
   return new Promise((ok, fail) => {
-    const url = URL.createObjectURL(file), img = new Image();
+    const img = new Image();
     img.onload = () => {
       let w = img.naturalWidth, h = img.naturalHeight; const max = 1200;
       if (Math.max(w, h) > max) { const k = max / Math.max(w, h); w = Math.round(w * k); h = Math.round(h * k); }
       const c = document.createElement('canvas'); c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
+      c.getContext('2d').drawImage(img, 0, 0, w, h); if (revoke) URL.revokeObjectURL(url);
       let q = .82, out = c.toDataURL('image/jpeg', q);
       while (out.length > 440000 && q > .4) { q -= .1; out = c.toDataURL('image/jpeg', q); }
       ok(out);

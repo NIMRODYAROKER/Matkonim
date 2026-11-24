@@ -102,6 +102,144 @@ function safeEqual(a, b) {
   return r === 0;
 }
 
+// ---------- הוספה מקישור ----------
+// רוב אתרי המתכונים שומרים בתוך הדף את המתכון בצורה מסודרת (שם, מצרכים, שלבים, תמונה).
+// קוראים רק את זה, בלי לנחש ובלי AI. אם אין מתכון מסודר בדף, לוקחים רק שם ותמונה.
+const SOCIAL = /(^|\.)(instagram\.com|facebook\.com|fb\.watch|tiktok\.com|youtube\.com|youtu\.be)$/;
+const SITE_NAMES = { 'instagram.com': 'אינסטגרם', 'facebook.com': 'פייסבוק', 'fb.watch': 'פייסבוק', 'tiktok.com': 'טיקטוק', 'youtube.com': 'יוטיוב', 'youtu.be': 'יוטיוב',
+  'mako.co.il': 'mako', 'ynet.co.il': 'ynet', 'walla.co.il': 'וואלה', 'hashulchan.co.il': 'השולחן', 'tavshilim.co.il': 'תבשילים', '10dakot.co.il': '10 דקות' };
+// אבטחה: רק כתובות רגילות באינטרנט, בלי כתובות פנימיות, מספרי IP או פורטים מיוחדים
+function publicUrl(u) {
+  let p; try { p = new URL(String(u || '').trim().slice(0, 600)); } catch (e) { return null; }
+  if (p.protocol !== 'https:' && p.protocol !== 'http:') return null;
+  if (p.port || p.username || p.password) return null;
+  const h = p.hostname.toLowerCase();
+  if (!h.includes('.') || /^[\d.]+$/.test(h) || h.includes(':') || h.startsWith('[')) return null;
+  if (/(^|\.)(localhost|local|internal|lan|home|arpa)$/.test(h) || (h.endsWith('workers.dev') && h.startsWith('matkonim'))) return null;
+  return p;
+}
+async function safeFetch(u, accept, maxBytes) {
+  let p = publicUrl(u);
+  for (let i = 0; i < 6 && p; i++) {
+    const res = await fetch(p.toString(), {
+      redirect: 'manual', signal: AbortSignal.timeout(9000),
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; MatkonimBot/1.0; family recipe book)', accept, 'accept-language': 'he,en;q=0.8' }
+    });
+    if (res.status >= 300 && res.status < 400 && res.headers.get('location')) { p = publicUrl(new URL(res.headers.get('location'), p).toString()); continue; }
+    if (!res.ok) return null;
+    const len = +(res.headers.get('content-length') || 0);
+    if (len > maxBytes) return null;
+    const reader = res.body.getReader(), parts = []; let size = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length; if (size > maxBytes) { reader.cancel(); return null; }
+      parts.push(value);
+    }
+    const buf = new Uint8Array(size); let o = 0; for (const x of parts) { buf.set(x, o); o += x.length; }
+    return { url: p, type: res.headers.get('content-type') || '', buf };
+  }
+  return null;
+}
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–', mdash: '—', hellip: '…', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', deg: '°', frac12: '½', frac14: '¼', frac34: '¾' };
+const unent = (s) => String(s || '').replace(/&(#x[\da-f]+|#\d+|\w+);/gi, (m, e) =>
+  e[0] === '#' ? (() => { const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : +e.slice(1); return n > 0 && n < 0x110000 ? String.fromCodePoint(n) : ''; })() : (ENT[e.toLowerCase()] ?? m));
+const clean = (s) => unent(unent(String(s ?? '')).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, ' ')).replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').trim();
+const textOf = (v) => typeof v === 'string' ? v : (v && typeof v === 'object' ? (v.text || v.name || '') : '');
+function findRecipe(node, depth = 0) {
+  if (!node || depth > 6) return null;
+  if (Array.isArray(node)) { for (const x of node) { const r = findRecipe(x, depth + 1); if (r) return r; } return null; }
+  if (typeof node !== 'object') return null;
+  const t = node['@type']; const types = Array.isArray(t) ? t : [t];
+  if (types.some(x => String(x).toLowerCase() === 'recipe')) return node;
+  return findRecipe(node['@graph'], depth + 1) || findRecipe(node.mainEntity, depth + 1);
+}
+function stepsOf(v, out = [], depth = 0) {
+  if (!v || depth > 4) return out;
+  if (typeof v === 'string') { clean(v).split('\n').forEach(x => x.trim() && out.push(x.trim())); return out; }
+  if (Array.isArray(v)) { v.forEach(x => stepsOf(x, out, depth + 1)); return out; }
+  if (typeof v === 'object') {
+    if (v.itemListElement) { if (v.name) out.push(clean(v.name).replace(/:?$/, ':')); stepsOf(v.itemListElement, out, depth + 1); }
+    else stepsOf(textOf(v), out, depth + 1);
+  }
+  return out;
+}
+function imageOf(v) {
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return imageOf(v[0]);
+  return v.url || v.contentUrl || '';
+}
+function guessCat(text) {
+  const t = String(text || '');
+  const has = (re) => re.test(t);
+  if (has(/עוגה|עוגת|עוגיות|עוגייה|מאפה|מאפים|לחם|חלה|בצק|פאי|טארט|קרואסון|בראוניז|מאפינס|פשטידה|קיש|בורקס|פוקאצ'ה|פיצה|קינוח|מוס|גלידה|עוגיה/)) return 'bake';
+  if (has(/מרק/)) return 'soup';
+  if (has(/סלט/)) return 'salad';
+  if (has(/עוף|פרגית|שניצל|כרעיים|חזה|כנפיים|הודו/)) return 'chicken';
+  if (has(/דג|סלמון|טונה|אמנון|לברק|דניס|מוסר|בקלה|שרימפס|חריימה/)) return 'fish';
+  if (has(/בשר|בקר|קציצ|כבש|אנטריקוט|צלע|אסאדו|פילה|המבורגר|קבב|טלה|נקניק/)) return 'meat';
+  return '';
+}
+async function importRecipe(link) {
+  const p = publicUrl(link);
+  if (!p) bad('הקישור לא נראה תקין');
+  let page;
+  try { page = await safeFetch(p.toString(), 'text/html,application/xhtml+xml', 3e6); } catch (e) { page = null; }
+  const host = (page ? page.url : p).hostname.replace(/^(www|m|mobile)\./, '');
+  const siteName = Object.entries(SITE_NAMES).find(([k]) => host === k || host.endsWith('.' + k));
+  const out = { url: (page ? page.url : p).toString(), source: siteName ? siteName[1] : host, title: '', ing: [], steps: [], servings: '', note: '', cat: '', found: false, social: SOCIAL.test(host) };
+  if (!page || !/html/i.test(page.type)) { out.error = 'לא הצלחנו לקרוא את הדף. אפשר למלא ידנית'; return out; }
+  const html = new TextDecoder('utf-8').decode(page.buf);
+  const meta = (name) => {
+    const re = new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]*>`, 'i');
+    const tag = (html.match(re) || [])[0] || '';
+    return clean((tag.match(/content=["']([^"']*)["']/i) || [])[1] || '');
+  };
+  let rec = null;
+  for (const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try { rec = findRecipe(JSON.parse(m[1].trim())); } catch (e) { rec = null; }
+    if (rec) break;
+  }
+  let img = meta('og:image') || meta('twitter:image');
+  if (rec) {
+    out.found = true;
+    out.title = clean(rec.name);
+    out.ing = (Array.isArray(rec.recipeIngredient) ? rec.recipeIngredient : (rec.recipeIngredient ? [rec.recipeIngredient] : []))
+      .map(x => clean(textOf(x))).filter(Boolean).slice(0, 80);
+    out.steps = stepsOf(rec.recipeInstructions).map(clean).filter(Boolean).slice(0, 40);
+    const y = Array.isArray(rec.recipeYield) ? rec.recipeYield[0] : rec.recipeYield;
+    out.servings = y ? clean(String(y)).slice(0, 40) : '';
+    img = imageOf(rec.image) || img;
+    const a = Array.isArray(rec.author) ? rec.author[0] : rec.author;
+    const author = clean(textOf(a));
+    if (author && author.length < 50) out.source = `${author} (${out.source})`;
+    if (!out.ing.length && !out.steps.length) out.found = false;
+  }
+  if (!out.title) out.title = (meta('og:title') || clean((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1])).split(/\s[|\-–]\s/)[0];
+  // אינסטגרם/פייסבוק: "שם on Instagram: "התיאור"" — לוקחים רק את השורה הראשונה של התיאור
+  const soc = /^.{0,60}\s(on|ב-?)\s?(Instagram|Facebook|TikTok|אינסטגרם|פייסבוק)\s*[:|]\s*/i;
+  if (soc.test(out.title)) out.title = out.title.replace(soc, '').replace(/^["“'״]+|["”'״]+$/g, '');
+  out.title = out.title.split('\n')[0].trim().slice(0, 80);
+  if (!out.found) {
+    // אין מתכון מסודר בדף (למשל אינסטגרם): שומרים את התיאור כמו שהוא בהערה, כדי שיהיה קל להעתיק
+    const d = meta('og:description') || meta('description');
+    if (d) out.note = d.replace(/^[\d,.]+[KkMm]?\s+likes?,?\s*([\d,.]+[KkMm]?\s+comments?)?\s*-\s*[^:]{1,60}:\s*/i, '').replace(/^["“]|["”]\.?$/g, '').slice(0, 600);
+  }
+  out.cat = guessCat(out.title + ' ' + (rec ? clean(textOf(rec.recipeCategory)) : ''));
+  // התמונה: מורידים עותק כדי שתישמר באתר (קישורי תמונות מרשתות חברתיות פגים)
+  if (img) {
+    try {
+      const im = await safeFetch(new URL(img, page.url).toString(), 'image/*', 4e6);
+      if (im && /^image\/(jpeg|png|webp|gif|avif)/i.test(im.type)) {
+        let bin = ''; for (let i = 0; i < im.buf.length; i += 0x8000) bin += String.fromCharCode(...im.buf.subarray(i, i + 0x8000));
+        out.image = `data:${im.type.split(';')[0]};base64,${btoa(bin)}`;
+      }
+    } catch (e) { /* בלי תמונה */ }
+  }
+  return out;
+}
+
 export class RecipesDB extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -442,7 +580,7 @@ export class RecipesDB extends DurableObject {
       if (!me.admin) { this.secLog('admin-denied', me.email, ip); throw new HttpError(403, 'רק למנהל האתר'); }
       if (path === '/api/admin/users' && method === 'GET') {
         return json({ users: this.q('SELECT id, name, email, created FROM users ORDER BY created'),
-          alerts: this.q("SELECT t, kind, who FROM security_log WHERE kind IN ('login-locked','signup-limit','admin-denied','book-denied') ORDER BY t DESC LIMIT 20") });
+          alerts: this.q("SELECT t, kind, who FROM security_log WHERE kind IN ('login-locked','signup-limit','admin-denied','book-denied','import-blocked') ORDER BY t DESC LIMIT 20") });
       }
       if ((m = path.match(/^\/api\/admin\/users\/(\d+)\/reset$/)) && method === 'POST') {
         const u = this.one('SELECT * FROM users WHERE id = ?', +m[1]);
@@ -519,6 +657,15 @@ export class RecipesDB extends DurableObject {
         return json({ ok: true });
       }
       return json(this.view(me, this.book(b.id)));
+    }
+
+    // ----- הוספה מקישור: קורא את המתכון מתוך הדף (בלי AI) -----
+    if (path === '/api/import' && method === 'POST') {
+      if (L.over('imp:' + me.id, 30, 600e3)) throw new HttpError(429, 'יותר מדי קישורים בזמן קצר. חכו כמה דקות');
+      L.add('imp:' + me.id, 600e3);
+      // ניסיון לקרוא כתובת פנימית או לא רגילה נרשם כהתראה למנהל
+      if (!publicUrl(body.url)) { if (/^https?:/i.test(String(body.url || '').trim())) this.secLog('import-blocked', me.email, ip); bad('הקישור לא נראה תקין'); }
+      return json(await importRecipe(body.url));
     }
 
     // ----- מתכונים -----
