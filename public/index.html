@@ -733,7 +733,7 @@ function showForm(r) {
       ${r ? '' : `<div class="imp">
         <b>${ic('link')}יש קישור למתכון?</b>
         <span>מדביקים אותו כאן, והשם, המצרכים, ההכנה והתמונה יתמלאו לבד</span>
-        <form class="nb" id="impf" novalidate><input class="inp" name="link" type="url" dir="ltr" placeholder="https://" value="${esc(PENDING_LINK)}"><button class="btn main" type="submit">מילוי</button></form>
+        <form class="nb" id="impf" novalidate><input class="inp" name="link" type="url" dir="ltr" placeholder="https://" value="${esc(PENDING_LINK)}"></form>
         <div class="imsg" id="imsg"></div>
       </div>`}
       <form id="rf" novalidate>
@@ -782,10 +782,11 @@ function showForm(r) {
     impf.onsubmit = async (e) => {
       e.preventDefault();
       const link = findLink(impf.link.value);
-      const msg = $('#imsg'), btn = impf.querySelector('button');
+      const msg = $('#imsg');
       if (!link) { msg.className = 'imsg bad'; msg.textContent = 'הקישור לא נראה תקין'; return; }
-      impf.link.value = link;
-      btn.disabled = true; msg.className = 'imsg'; msg.textContent = 'קוראים את המתכון מהקישור...';
+      if (link === lastLink) return;
+      lastLink = link; impf.link.value = link;
+      msg.className = 'imsg'; msg.textContent = 'קוראים את המתכון מהקישור...';
       try {
         const d = await api('/api/import', { url: link });
         const rf = $('#rf'), set = (n, v) => { if (v) rf[n].value = v; };
@@ -801,9 +802,14 @@ function showForm(r) {
         else { msg.className = 'imsg'; msg.textContent = d.social
           ? 'מהאתר הזה אפשר לקחת רק שם, תמונה ותיאור. את המצרכים וההכנה מוסיפים ידנית, או שומרים כקישור בלבד'
           : 'בדף הזה אין מתכון מסודר, אז מילאנו רק שם ותמונה. את השאר מוסיפים ידנית'; }
-      } catch (err) { msg.className = 'imsg bad'; msg.textContent = err.message; }
-      btn.disabled = false;
+      } catch (err) { msg.className = 'imsg bad'; msg.textContent = err.message; lastLink = ''; }
     };
+    // מדביקים קישור והמילוי מתחיל לבד, בלי כפתור
+    let lastLink = '', wait;
+    impf.link.addEventListener('input', () => {
+      clearTimeout(wait);
+      if (findLink(impf.link.value)) wait = setTimeout(() => impf.requestSubmit(), 400);
+    });
     if (PENDING_LINK) { PENDING_LINK = ''; impf.requestSubmit(); }
   }
   $('#rf').onsubmit = async (e) => {
